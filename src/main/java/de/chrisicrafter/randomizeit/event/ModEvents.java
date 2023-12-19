@@ -9,6 +9,7 @@ import de.chrisicrafter.randomizeit.networking.packet.ChangeGameruleS2CPacket;
 import de.chrisicrafter.randomizeit.networking.packet.UpdateRandomizerDataS2CPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -27,5 +28,10 @@ public class ModEvents {
             ModMessages.sendToPlayer(new ChangeGameruleS2CPacket(GameruleData.staticChestLoot, event.getLevel().getGameRules().getBoolean(ModGameRules.RANDOM_CHEST_LOOT)), player);
             ModMessages.sendToPlayer(new UpdateRandomizerDataS2CPacket(RandomizerData.getInstance(level)), player);
         }
+    }
+
+    @SubscribeEvent
+    public static void onTick(TickEvent.ServerTickEvent event) {
+        if(event.phase == TickEvent.Phase.START) RandomizerData.getInstance(event.getServer().overworld()).doTick(event.getServer().overworld());
     }
 }

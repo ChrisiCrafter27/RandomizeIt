@@ -5,6 +5,9 @@
   "gamerule.randomCraftingResult": "Random Crafting Results",
   "gamerule.randomChestLoot": "Random Chest Loot",
   "gamerule.staticChestLoot": "Static Chest Loot",
+  "gamerule.randomRandomizerToggleInterval": "Random randomizer toggle interval",
+  "gamerule.randomRandomizerToggleInterval.description": "Interval in minutes. Set to 0 to disable",
+  "gamerule.announceRandomizerToggle": "Announce randomizer toggles",
 
   "commands.randomizeit.randomize.reset.all": "Reset all item mutations",
   "commands.randomizeit.randomize.reset.one": "Reset item mutations for %s",
