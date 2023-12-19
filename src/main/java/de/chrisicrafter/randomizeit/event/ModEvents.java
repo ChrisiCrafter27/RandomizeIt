@@ -3,34 +3,29 @@ package de.chrisicrafter.randomizeit.event;
 import de.chrisicrafter.randomizeit.RandomizeIt;
 import de.chrisicrafter.randomizeit.data.RandomizerData;
 import de.chrisicrafter.randomizeit.data.client.GameruleData;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import de.chrisicrafter.randomizeit.gamerule.ModGameRules;
+import de.chrisicrafter.randomizeit.networking.ModMessages;
+import de.chrisicrafter.randomizeit.networking.packet.ChangeGameruleS2CPacket;
+import de.chrisicrafter.randomizeit.networking.packet.UpdateRandomizerDataS2CPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = RandomizeIt.MOD_ID, value = Dist.CLIENT)
-public class ModClientEvents {
+@Mod.EventBusSubscriber(modid = RandomizeIt.MOD_ID)
+public class ModEvents {
 
     @SubscribeEvent
-    public static void onItemTooltip(ItemTooltipEvent event) {
-        if(GameruleData.showDiscoveredMutations.enabled) {
-            RandomizerData.getInstance().ifPresent(data -> {
-                if(GameruleData.randomBlockDrops.enabled) {
-                    Item blockItem = data.getRandomizedItemForBlockIfSet(event.getItemStack().getItem());
-                    if(blockItem != null) {
-                        event.getToolTip().add(Component.literal("Obtained by block drop: ").append(blockItem.getName(new ItemStack(blockItem))));
-                    }
-                }
-                if(GameruleData.randomMobDrops.enabled) {
-                    Item entityItem = data.getRandomizedItemForBlockIfSet(event.getItemStack().getItem());
-                    if(entityItem != null) {
-                        event.getToolTip().add(Component.literal("Obtained by mob drop: ").append(entityItem.getName(new ItemStack(entityItem))));
-                    }
-                }
-            });
+    public static void onPlayerJoin(EntityJoinLevelEvent event) {
+        if(event.getEntity() instanceof ServerPlayer player && event.getLevel() instanceof ServerLevel level) {
+            ModMessages.sendToPlayer(new ChangeGameruleS2CPacket(GameruleData.showDiscoveredMutations, event.getLevel().getGameRules().getBoolean(ModGameRules.SHOW_DISCOVERED_MUTATIONS)), player);
+            ModMessages.sendToPlayer(new ChangeGameruleS2CPacket(GameruleData.randomBlockDrops, event.getLevel().getGameRules().getBoolean(ModGameRules.RANDOM_BLOCK_DROPS)), player);
+            ModMessages.sendToPlayer(new ChangeGameruleS2CPacket(GameruleData.randomMobDrops, event.getLevel().getGameRules().getBoolean(ModGameRules.RANDOM_MOB_DROPS)), player);
+            ModMessages.sendToPlayer(new ChangeGameruleS2CPacket(GameruleData.randomCraftingResult, event.getLevel().getGameRules().getBoolean(ModGameRules.RANDOM_CRAFTING_RESULT)), player);
+            ModMessages.sendToPlayer(new ChangeGameruleS2CPacket(GameruleData.randomChestLoot, event.getLevel().getGameRules().getBoolean(ModGameRules.RANDOM_CHEST_LOOT)), player);
+            ModMessages.sendToPlayer(new ChangeGameruleS2CPacket(GameruleData.staticChestLoot, event.getLevel().getGameRules().getBoolean(ModGameRules.RANDOM_CHEST_LOOT)), player);
+            ModMessages.sendToPlayer(new UpdateRandomizerDataS2CPacket(RandomizerData.getInstance(level)), player);
         }
     }
 }

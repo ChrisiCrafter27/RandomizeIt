@@ -1,0 +1,14 @@
+{
+  "gamerule.showDiscoveredMutations": "Show Discovered Mutations",
+  "gamerule.randomBlockDrops": "Random Block Drops",
+  "gamerule.randomMobDrops": "Random Mob Drops",
+  "gamerule.randomCraftingResult": "Random Crafting Results",
+  "gamerule.randomChestLoot": "Random Chest Loot",
+  "gamerule.staticChestLoot": "Static Chest Loot",
+
+  "commands.randomizeit.randomize.reset.all": "Reset all item mutations",
+  "commands.randomizeit.randomize.reset.one": "Reset item mutations for %s",
+  "commands.randomizeit.randomize.get.success": "%s: %s -> %s -> %s",
+  "commands.randomizeit.randomize.set.success": "Item mutation set in %s:\n %s -> %s",
+  "commands.randomizeit.randomize.set.failure": "Item mutation in %s was already set:\n %s -> %s"
+}

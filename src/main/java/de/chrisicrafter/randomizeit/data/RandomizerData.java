@@ -10,7 +10,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -19,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class RandomizerData extends SavedData {
     private static RandomizerData instance;
@@ -135,8 +133,8 @@ public class RandomizerData extends SavedData {
         return instance;
     }
 
-    public Item getRandomizedItemForBlock(Item key) {
-        if(!blockDrops.containsKey(key)) {
+    public Item getRandomizedItemForBlock(Item key, boolean computeIfAbsent) {
+        if(!blockDrops.containsKey(key) && computeIfAbsent) {
             List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(block -> !blockDrops.containsValue(block)).toList();
             blockDrops.put(key, list.get(RandomSource.create().nextInt(0, list.size())));
             setDirty();
@@ -144,8 +142,8 @@ public class RandomizerData extends SavedData {
         return blockDrops.get(key);
     }
 
-    public Item getRandomizedItemForEntity(Item key) {
-        if(!entityDrops.containsKey(key)) {
+    public Item getRandomizedItemForMob(Item key, boolean computeIfAbsent) {
+        if(!entityDrops.containsKey(key) && computeIfAbsent) {
             List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(entity -> !entityDrops.containsValue(entity)).toList();
             entityDrops.put(key, list.get(RandomSource.create().nextInt(0, list.size())));
             setDirty();
@@ -153,8 +151,8 @@ public class RandomizerData extends SavedData {
         return entityDrops.get(key);
     }
 
-    public Item getRandomizedItemForRecipe(Item key) {
-        if(!craftingResult.containsKey(key)) {
+    public Item getRandomizedItemForRecipe(Item key, boolean computeIfAbsent) {
+        if(!craftingResult.containsKey(key) && computeIfAbsent) {
             List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(entity -> !craftingResult.containsValue(entity)).toList();
             craftingResult.put(key, list.get(RandomSource.create().nextInt(0, list.size())));
             setDirty();
@@ -162,8 +160,8 @@ public class RandomizerData extends SavedData {
         return craftingResult.get(key);
     }
 
-    public Item getRandomizedItemForLoot(Item key) {
-        if(!chestLoot.containsKey(key)) {
+    public Item getStaticRandomizedItemForLoot(Item key, boolean computeIfAbsent) {
+        if(!chestLoot.containsKey(key) && computeIfAbsent) {
             List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(entity -> !chestLoot.containsValue(entity)).toList();
             chestLoot.put(key, list.get(RandomSource.create().nextInt(0, list.size())));
             setDirty();
@@ -171,7 +169,64 @@ public class RandomizerData extends SavedData {
         return chestLoot.get(key);
     }
 
-    public ItemStack getRecipeResultSource(ItemStack stack) {
-        return !craftingResult.containsValue(stack.getItem()) ? stack : new ItemStack(Objects.requireNonNull(MapUtils.getKey(craftingResult, stack.getItem())), stack.getCount());
+    public Item getUniqueRandomizedItemForLoot() {
+        List<Item> list = ForgeRegistries.ITEMS.getValues().stream().toList();
+        return list.get(RandomSource.create().nextInt(0, list.size()));
+    }
+
+    public Item blockDropsSource(Item item) {
+        return MapUtils.getKey(blockDrops, item);
+    }
+
+    public Item mobDropsSource(Item item) {
+        return MapUtils.getKey(entityDrops, item);
+    }
+
+    public Item craftingResultSource(Item item) {
+        return MapUtils.getKey(craftingResult, item);
+    }
+
+    public Item chestLootSource(Item item) {
+        return MapUtils.getKey(chestLoot, item);
+    }
+
+    public void resetBlockDrops() {
+        blockDrops.clear();
+        setDirty();
+    }
+
+    public void resetMobDrops() {
+        entityDrops.clear();
+        setDirty();
+    }
+
+    public void resetCraftingResult() {
+        craftingResult.clear();
+        setDirty();
+    }
+
+    public void resetChestLoot() {
+        chestLoot.clear();
+        setDirty();
+    }
+
+    public void setBlockDrop(Item key, Item value) {
+        blockDrops.put(key, value);
+        setDirty();
+    }
+
+    public void setMobDrop(Item key, Item value) {
+        entityDrops.put(key, value);
+        setDirty();
+    }
+
+    public void setCraftingResult(Item key, Item value) {
+        craftingResult.put(key, value);
+        setDirty();
+    }
+
+    public void setChestLoot(Item key, Item value) {
+        chestLoot.put(key, value);
+        setDirty();
     }
 }

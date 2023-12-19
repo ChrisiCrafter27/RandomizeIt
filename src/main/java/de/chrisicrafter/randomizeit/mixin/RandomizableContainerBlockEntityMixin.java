@@ -1,24 +1,86 @@
 package de.chrisicrafter.randomizeit.mixin;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.Container;
+import de.chrisicrafter.randomizeit.data.RandomizerData;
+import de.chrisicrafter.randomizeit.gamerule.ModGameRules;
+import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
-import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Mixin(RandomizableContainerBlockEntity.class)
-public abstract class RandomizableContainerBlockEntityMixin {
-    @Inject(method = "unpackLootTable", at = @At("HEAD"), cancellable = true)
-    public void fill(Player p_59641_, CallbackInfo info) {
+public abstract class RandomizableContainerBlockEntityMixin extends BaseContainerBlockEntity {
+    @Shadow protected ResourceLocation lootTable;
+    @Shadow protected long lootTableSeed;
+    @Unique private final Map<Item, Item> randomizeIt$map = new HashMap<>();
 
+    @Shadow public abstract void setItem(int slot, @NotNull ItemStack item);
+    @Shadow public abstract @NotNull ItemStack getItem(int slot);
+    @Shadow protected abstract NonNullList<ItemStack> getItems();
+    @Shadow protected abstract void setItems(NonNullList<ItemStack> items);
+
+    protected RandomizableContainerBlockEntityMixin(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState) {
+        super(blockEntityType, blockPos, blockState);
+    }
+
+    @Inject(method = "unpackLootTable", at = @At("HEAD"), cancellable = true)
+    public void fillTail(Player player, CallbackInfo info) {
+        if (this.lootTable != null && this.level.getServer() != null && level.getGameRules().getBoolean(ModGameRules.RANDOM_CHEST_LOOT)) {
+            LootTable loottable = this.level.getServer().getLootData().getLootTable(this.lootTable);
+            if (player instanceof ServerPlayer) {
+                CriteriaTriggers.GENERATE_LOOT.trigger((ServerPlayer)player, this.lootTable);
+            }
+
+            this.lootTable = null;
+            LootParams.Builder lootparams$builder = (new LootParams.Builder((ServerLevel)this.level)).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(this.worldPosition));
+            if (player != null) {
+                lootparams$builder.withLuck(player.getLuck()).withParameter(LootContextParams.THIS_ENTITY, player);
+            }
+
+            loottable.fill(this, lootparams$builder.create(LootContextParamSets.CHEST), this.lootTableSeed);
+
+            NonNullList<ItemStack> items = getItems();
+            items.replaceAll(item -> {
+                if(item.is(Items.AIR) || item.getCount() == 0) return item;
+                return new ItemStack(randomizeIt$getRandomizedItem((ServerLevel) this.level, item.getItem()), item.getCount());
+            });
+            setItems(items);
+
+            info.cancel();
+        }
+    }
+
+    @Unique
+    private Item randomizeIt$getRandomizedItem(ServerLevel level, Item item) {
+        if(level.getGameRules().getBoolean(ModGameRules.STATIC_CHEST_LOOT)) {
+            return RandomizerData.getInstance(level).getStaticRandomizedItemForLoot(item, true);
+        } else {
+            if(!randomizeIt$map.containsKey(item)) randomizeIt$map.put(item, RandomizerData.getInstance(level).getUniqueRandomizedItemForLoot());
+            return randomizeIt$map.get(item);
+        }
     }
 }

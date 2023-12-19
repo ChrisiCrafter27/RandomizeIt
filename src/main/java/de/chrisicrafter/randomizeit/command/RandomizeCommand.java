@@ -3,213 +3,135 @@ package de.chrisicrafter.randomizeit.command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import de.chrisicrafter.skillscreenapi.SkillScreenApi;
-import de.chrisicrafter.skillscreenapi.common.data.PlayerSkills;
-import de.chrisicrafter.skillscreenapi.common.data.PlayerSkillsProvider;
-import de.chrisicrafter.skillscreenapi.common.skills.SkillHolder;
-import de.chrisicrafter.skillscreenapi.common.skills.SkillNode;
-import de.chrisicrafter.skillscreenapi.common.skills.SkillProgress;
+import de.chrisicrafter.randomizeit.data.RandomizerData;
 import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.server.command.EnumArgument;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.NoSuchElementException;
-
-public class SkillCommand extends PermissionLevel {
-    private static final SuggestionProvider<CommandSourceStack> SUGGEST_SKILLS = (context, builder) -> {
-        Collection<SkillHolder> collection = SkillScreenApi.getSkillManager().getAllSkills();
-        return SharedSuggestionProvider.suggestResource(collection.stream().map(SkillHolder::id), builder);
-    };
-    private static final SuggestionProvider<CommandSourceStack> SUGGEST_ROOTS = (context, builder) -> {
-        Collection<SkillHolder> collection = SkillScreenApi.getSkillManager().getAllSkills();
-        return SharedSuggestionProvider.suggestResource(collection.stream().filter(skill -> skill.value().getParents().isEmpty()).map(SkillHolder::id), builder);
-    };
+public class RandomizeCommand {
+    private static final SuggestionProvider<CommandSourceStack> SUGGEST_ITEMS =
+            (context, builder) -> SharedSuggestionProvider.suggestResource(ForgeRegistries.ITEMS.getKeys(), builder);
 
     public static LiteralArgumentBuilder<CommandSourceStack> register() {
-        return LiteralArgumentBuilder.<CommandSourceStack>literal("skill")
-                .requires(context -> context.hasPermission(PERMISSION_LEVEL_CHEAT))
+        return LiteralArgumentBuilder.<CommandSourceStack>literal("randomize")
+                .requires(context -> context.hasPermission(/*cheat level*/ 2))
                 .then(Commands.literal("reset")
-                        .requires(context -> context.isPlayer() && context.hasPermission(PERMISSION_LEVEL_ADMIN))
-                        .executes(context -> reset(context, List.of(context.getSource().getPlayerOrException())))
-                        .then(Commands.argument("players", EntityArgument.players())
-                                .executes(context -> reset(context, EntityArgument.getPlayers(context, "players")))))
-                .then(Commands.literal("state")
-                        .then(Commands.literal("get")
-                                .then(Commands.argument("player", EntityArgument.player())
-                                        .then(Commands.argument("skill", ResourceLocationArgument.id())
-                                                .suggests(SUGGEST_SKILLS)
-                                                .executes(context -> get(context, EntityArgument.getPlayer(context, "player"), ResourceLocationArgument.getId(context, "skill"))))))
-                        .then(Commands.literal("set")
-                                .then(Commands.argument("players", EntityArgument.players())
-                                        .then(Commands.literal("only")
-                                                .then(Commands.argument("skill", ResourceLocationArgument.id())
-                                                        .suggests(SUGGEST_SKILLS)
-                                                        .then(Commands.argument("state", EnumArgument.enumArgument(State.class))
-                                                                .executes(context -> set(context, EntityArgument.getPlayers(context, "players"), ResourceLocationArgument.getId(context, "skill"), context.getArgument("state", State.class))))))
-                                        .then(Commands.literal("from")
-                                                .then(Commands.argument("skill", ResourceLocationArgument.id())
-                                                        .suggests(SUGGEST_SKILLS)
-                                                        .then(Commands.argument("state", EnumArgument.enumArgument(State.class))
-                                                                .executes(context -> setFrom(context, EntityArgument.getPlayers(context, "players"), ResourceLocationArgument.getId(context, "skill"), context.getArgument("state", State.class)))))
-                                                .then(Commands.literal("root")
-                                                        .then(Commands.argument("skill", ResourceLocationArgument.id())
-                                                                .suggests(SUGGEST_ROOTS)
-                                                                .then(Commands.argument("state", EnumArgument.enumArgument(State.class))
-                                                                        .executes(context -> setFrom(context, EntityArgument.getPlayers(context, "players"), ResourceLocationArgument.getId(context, "skils"), context.getArgument("state", State.class)))))))
-                                        .then(Commands.literal("everything")
-                                                .then(Commands.argument("state", EnumArgument.enumArgument(State.class))
-                                                        .executes(context -> setAll(context, EntityArgument.getPlayers(context, "players"), context.getArgument("state", State.class))))))));
+                        .requires(CommandSourceStack::isPlayer)
+                        .then(Commands.literal("*")
+                                .executes(RandomizeCommand::reset))
+                        .then(Commands.argument("type", EnumArgument.enumArgument(Type.class))
+                                .executes(context -> reset(context, context.getArgument("type", Type.class), true))))
+                .then(Commands.literal("get")
+                        .then(Commands.argument("type", EnumArgument.enumArgument(Type.class))
+                                .then(Commands.argument("item", ResourceLocationArgument.id())
+                                        .suggests(SUGGEST_ITEMS)
+                                        .executes(context -> get(context, ResourceLocationArgument.getId(context, "item"), context.getArgument("type", Type.class))))))
+                .then(Commands.literal("set")
+                        .then(Commands.argument("type", EnumArgument.enumArgument(Type.class))
+                                .then(Commands.argument("key", ResourceLocationArgument.id())
+                                        .suggests(SUGGEST_ITEMS)
+                                        .then(Commands.argument("value", ResourceLocationArgument.id())
+                                                .suggests(SUGGEST_ITEMS)
+                                                .executes(context -> set(context, ResourceLocationArgument.getId(context, "key"), ResourceLocationArgument.getId(context, "value"), context.getArgument("type", Type.class), false))
+                                                .then(Commands.literal("replace")
+                                                        .executes(context -> set(context, ResourceLocationArgument.getId(context, "key"), ResourceLocationArgument.getId(context, "value"), context.getArgument("type", Type.class), true)))))));
     }
 
-    private static int reset(CommandContext<CommandSourceStack> context, Collection<ServerPlayer> players) {
-        if(players.isEmpty()) {
-            context.getSource().sendFailure(Component.translatable("commands.skillscreenapi.reset.fail"));
-            return 0;
-        }
-        for (ServerPlayer player : players) {
-            PlayerSkills playerSkills = player.getCapability(PlayerSkillsProvider.PLAYER_SKILLS).orElseThrow(NoSuchElementException::new);
-            for(SkillHolder skill : SkillScreenApi.getSkillManager().getAllSkills()) {
-                playerSkills.changeProgress(skill, SkillProgress.LOCKED, player);
-            }
-        }
-        context.getSource().sendSuccess(() -> Component.translatable("commands.skillscreenapi.reset.success", players.size() > 1 ? (players.size() + " players") : context.getSource().getDisplayName()), true);
+    private static int reset(CommandContext<CommandSourceStack> context) {
+        reset(context, Type.blockDrops, false);
+        reset(context, Type.mobDrops, false);
+        reset(context, Type.craftingResults, false);
+        reset(context, Type.chestLoots, false);
+        context.getSource().sendSuccess(() -> Component.translatable("commands.randomizeit.randomize.reset.all"), true);
         return 1;
     }
 
-    private static int get(CommandContext<CommandSourceStack> context, ServerPlayer player, ResourceLocation id) {
-        PlayerSkills playerSkills = player.getCapability(PlayerSkillsProvider.PLAYER_SKILLS).orElseThrow(NoSuchElementException::new);
-        for(SkillHolder skill : SkillScreenApi.getSkillManager().getAllSkills()) {
-            if(skill.id().equals(id)) {
-                switch (playerSkills.getOrStartProgress(skill)) {
-                    case EXCLUDING -> {
-                        context.getSource().sendSuccess(() -> Component.translatable("commands.skillscreenapi.get.success", skill.value().display().getTitle(), player.getDisplayName(), "excluded by others", 1), false);
-                        return 1;
-                    }
-                    case LOCKED -> {
-                        context.getSource().sendSuccess(() -> Component.translatable("commands.skillscreenapi.get.success", skill.value().display().getTitle(), player.getDisplayName(), "locked", 2), false);
-                        return 2;
-                    }
-                    case LOCKED_PARENTS -> {
-                        context.getSource().sendSuccess(() -> Component.translatable("commands.skillscreenapi.get.success", skill.value().display().getTitle(), player.getDisplayName(), "locked by it's parent(s)", 3), false);
-                        return 3;
-                    }
-                    case AVAILABLE -> {
-                        context.getSource().sendSuccess(() -> Component.translatable("commands.skillscreenapi.get.success", skill.value().display().getTitle(), player.getDisplayName(), "available", 4), false);
-                        return 4;
-                    }
-                    case UNLOCKED -> {
-                        context.getSource().sendSuccess(() -> Component.translatable("commands.skillscreenapi.get.success", skill.value().display().getTitle(), player.getDisplayName(), "unlocked", 5), false);
-                        return 5;
-                    }
-                }
-            }
+    private static int reset(CommandContext<CommandSourceStack> context, Type type, boolean printSuccess) {
+        switch (type) {
+            case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel()).resetBlockDrops();
+            case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel()).resetMobDrops();
+            case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel()).resetCraftingResult();
+            case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel()).resetChestLoot();
         }
-        throw new CommandRuntimeException(Component.translatable("commands.skillscreenapi.get.fail", id));
-    }
-
-    private static int set(CommandContext<CommandSourceStack> context, Collection<ServerPlayer> players, ResourceLocation id, State state) {
-        if(players.isEmpty()) {
-            context.getSource().sendFailure(Component.translatable("commands.skillscreenapi.reset.fail"));
-            return 0;
-        }
-        for(SkillHolder skill : SkillScreenApi.getSkillManager().getAllSkills()) {
-            boolean success = false;
-            for (ServerPlayer player : players) {
-                PlayerSkills playerSkills = player.getCapability(PlayerSkillsProvider.PLAYER_SKILLS).orElseThrow(NoSuchElementException::new);
-                if(skill.id().equals(id)) {
-                    if(skill.value().immediatelyAvailable() && state == State.locked) {
-                        context.getSource().sendFailure(Component.translatable("commands.skillscreenapi.set.available", skill.value().display().getTitle()));
-                        return 0;
-                    }
-                    playerSkills.changeProgress(skill, switch (state) {
-                        case locked -> SkillProgress.LOCKED;
-                        case available -> SkillProgress.AVAILABLE;
-                        case unlocked -> SkillProgress.UNLOCKED;
-                    }, player);
-                    success = true;
-                }
-            }
-            if(success) {
-                context.getSource().sendSuccess(() -> Component.translatable("commands.skillscreenapi.set.success", skill.value().display().getTitle(), players.size() > 1 ? (players.size() + " players") : context.getSource().getDisplayName(), state.name()), true);
-                return 1;
-            }
-        }
-        context.getSource().sendFailure(Component.translatable("commands.skillscreenapi.set.fail", id));
-        return 0;
-    }
-
-    private static int setFrom(CommandContext<CommandSourceStack> context, Collection<ServerPlayer> players, ResourceLocation id, State state) {
-        if(players.isEmpty()) {
-            context.getSource().sendFailure(Component.translatable("commands.skillscreenapi.reset.fail"));
-            return 0;
-        }
-
-        for(SkillHolder from : SkillScreenApi.getSkillManager().getAllSkills()) {
-            if(from.id().equals(id)) {
-                List<SkillNode> parents = new ArrayList<>(List.of((SkillNode) SkillScreenApi.getSkillManager().tree().nodes().stream().filter(node -> node.holder() == from).toArray()[0]));
-                List<SkillNode> children = new ArrayList<>(parents);
-                while (!parents.isEmpty()) {
-                    List<SkillNode> temp = new ArrayList<>();
-                    for(SkillNode parent : parents) {
-                        temp.addAll(parent.children());
-                    }
-                    children.addAll(temp);
-                    parents = temp;
-                }
-
-                for (ServerPlayer player : players) {
-                    PlayerSkills playerSkills = player.getCapability(PlayerSkillsProvider.PLAYER_SKILLS).orElseThrow(NoSuchElementException::new);
-                    for(SkillHolder skill : SkillScreenApi.getSkillManager().getAllSkills()) {
-                        if(children.stream().map(SkillNode::holder).anyMatch(holder -> holder == skill)) {
-                            playerSkills.changeProgress(skill, switch (state) {
-                                case locked -> SkillProgress.LOCKED;
-                                case available -> SkillProgress.AVAILABLE;
-                                case unlocked -> SkillProgress.UNLOCKED;
-                            }, player);
-                        }
-                    }
-                }
-
-                context.getSource().sendSuccess(() -> Component.translatable("commands.skillscreenapi.set_from.success", from.value().display().getTitle(), players.size() > 1 ? (players.size() + " players") : context.getSource().getDisplayName(), state), true);
-                return 1;
-            }
-        }
-        context.getSource().sendFailure(Component.translatable("commands.skillscreenapi.set.fail", id));
-        return 0;
-    }
-
-    private static int setAll(CommandContext<CommandSourceStack> context, Collection<ServerPlayer> players, State state) {
-        if(players.isEmpty()) {
-            context.getSource().sendFailure(Component.translatable("commands.skillscreenapi.reset.fail"));
-            return 0;
-        }
-        for (ServerPlayer player : players) {
-            PlayerSkills playerSkills = player.getCapability(PlayerSkillsProvider.PLAYER_SKILLS).orElseThrow(NoSuchElementException::new);
-            for(SkillHolder skill : SkillScreenApi.getSkillManager().getAllSkills()) {
-                playerSkills.changeProgress(skill, switch (state) {
-                    case locked -> SkillProgress.LOCKED;
-                    case available -> SkillProgress.AVAILABLE;
-                    case unlocked -> SkillProgress.UNLOCKED;
-                }, player);
-            }
-        }
-        context.getSource().sendSuccess(() -> Component.translatable("commands.skillscreenapi.set_all.success", players.size() > 1 ? (players.size() + " players") : context.getSource().getDisplayName(), state), true);
+        if(printSuccess) context.getSource().sendSuccess(() -> Component.translatable("commands.randomizeit.randomize.reset.one", type.toString()), true);
         return 1;
     }
 
-    public enum State {
-        locked,
-        available,
-        unlocked
+    private static int get(CommandContext<CommandSourceStack> context, ResourceLocation id, Type type) {
+        Item key = ForgeRegistries.ITEMS.getValue(id);
+        if(key == null || key == Items.AIR) {
+            throw new CommandRuntimeException(Component.literal("Not an item: " + id.toString()));
+        }
+        Item value1 = switch (type) {
+            case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel()).blockDropsSource(key);
+            case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel()).mobDropsSource(key);
+            case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel()).craftingResultSource(key);
+            case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel()).chestLootSource(key);
+        };
+        Item value2 = switch (type) {
+            case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel()).getRandomizedItemForBlock(key, false);
+            case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel()).getRandomizedItemForMob(key, false);
+            case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel()).getRandomizedItemForRecipe(key, false);
+            case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel()).getStaticRandomizedItemForLoot(key, false);
+        };
+        context.getSource().sendSuccess(() -> Component.translatable(
+                "commands.randomizeit.randomize.get.success",
+                type.toString(),
+                value1 == null ? "unknown" : Component.translatable(value1.getDescriptionId()),
+                Component.translatable(key.getDescriptionId()),
+                value2 == null ? "unknown" : Component.translatable(value2.getDescriptionId())), false);
+        return 1;
+    }
+
+    private static int set(CommandContext<CommandSourceStack> context, ResourceLocation id1, ResourceLocation id2, Type type, boolean replace) {
+        Item key = ForgeRegistries.ITEMS.getValue(id1);
+        if(key == null || key == Items.AIR) {
+            throw new CommandRuntimeException(Component.literal("Not an item: " + id1.toString()));
+        }
+        Item value = ForgeRegistries.ITEMS.getValue(id2);
+        if(value == null || value == Items.AIR) {
+            throw new CommandRuntimeException(Component.literal("Not an item: " + id2.toString()));
+        }
+        Item previous = switch (type) {
+            case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel()).getRandomizedItemForBlock(key, false);
+            case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel()).getRandomizedItemForMob(key, false);
+            case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel()).getRandomizedItemForRecipe(key, false);
+            case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel()).getStaticRandomizedItemForLoot(key, false);
+        };
+        if(previous != null && !replace) {
+            context.getSource().sendFailure(Component.translatable(
+                    "commands.randomizeit.randomize.set.failure",
+                    type.toString(),
+                    Component.translatable(key.getDescriptionId()),
+                    Component.translatable(previous.getDescriptionId())));
+            return 0;
+        }
+        switch (type) {
+            case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel()).setBlockDrop(key, value);
+            case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel()).setMobDrop(key, value);
+            case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel()).setCraftingResult(key, value);
+            case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel()).setChestLoot(key, value);
+        };
+        context.getSource().sendSuccess(() -> Component.translatable(
+                "commands.randomizeit.randomize.set.success",
+                type.toString(),
+                Component.translatable(key.getDescriptionId()),
+                Component.translatable(value.getDescriptionId())), false);
+        return 1;
+    }
+
+    enum Type {
+        blockDrops,
+        mobDrops,
+        craftingResults,
+        chestLoots,
     }
 }

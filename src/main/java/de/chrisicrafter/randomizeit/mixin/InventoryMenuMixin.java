@@ -27,14 +27,14 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 
-@Mixin(CraftingMenu.class)
-public abstract class CraftingMenuMixin extends RecipeBookMenu<CraftingContainer> {
+@Mixin(InventoryMenu.class)
+public abstract class InventoryMenuMixin extends RecipeBookMenu<CraftingContainer> {
     @Unique private final MenuType<?> randomizeIt$menuType;
     @Unique private int randomizeIt$quickcraftType = -1;
     @Unique private int randomizeIt$quickcraftStatus;
     @Unique private final Set<Slot> randomizeIt$quickcraftSlots = Sets.newHashSet();
 
-    public CraftingMenuMixin(MenuType<?> menuType, int containerId) {
+    public InventoryMenuMixin(MenuType<?> menuType, int containerId) {
         super(menuType, containerId);
         this.randomizeIt$menuType = menuType;
     }
