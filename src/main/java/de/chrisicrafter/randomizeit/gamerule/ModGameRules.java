@@ -1,10 +1,13 @@
 package de.chrisicrafter.randomizeit.gamerule;
 
+import de.chrisicrafter.randomizeit.data.RandomizerData;
 import de.chrisicrafter.randomizeit.data.client.GameruleData;
 import de.chrisicrafter.randomizeit.networking.ModMessages;
 import de.chrisicrafter.randomizeit.networking.packet.ChangeGameruleS2CPacket;
+import de.chrisicrafter.randomizeit.networking.packet.UpdateRandomizerDataS2CPacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameRules;
 
 import java.util.HashMap;
@@ -40,6 +43,12 @@ public class ModGameRules {
     public static final GameRules.Key<GameRules.IntegerValue> RANDOM_RANDOMIZER_TOGGLE_INTERVAL = register("randomRandomizerToggleInterval", GameRules.Category.UPDATES, GameRules.IntegerValue.create(0,
             ((server, value) -> {if(value.get() < 0) server.getGameRules().getRule(ModGameRules.RANDOM_RANDOMIZER_TOGGLE_INTERVAL).set(0, server);})));
     public static final GameRules.Key<GameRules.BooleanValue> ANNOUNCE_RANDOMIZER_TOGGLES = register("announceRandomizerToggle", GameRules.Category.UPDATES, GameRules.BooleanValue.create(true));
+    public static final GameRules.Key<GameRules.BooleanValue> PLAYER_UNIQUE_DATA = register("playerUniqueData", GameRules.Category.DROPS, GameRules.BooleanValue.create(true,
+            ((server, value) -> {
+                for(ServerPlayer player : server.getPlayerList().getPlayers()) {
+                    ModMessages.sendToPlayer(new UpdateRandomizerDataS2CPacket(RandomizerData.getInstance(server.overworld(), player)));
+                }
+            })));
 
     private static <T extends GameRules.Value<T>> GameRules.Key<T> register(String id, GameRules.Category category, GameRules.Type<?> value) {
         GameRules.Key<T> key = new GameRules.Key<>(id, category);

@@ -55,7 +55,7 @@ public abstract class LivingEntityMixin extends Entity {
                 Collection<ItemEntity> drops = captureDrops(null);
                 if (!net.minecraftforge.common.ForgeHooks.onLivingDrops((LivingEntity) (Object) this, damageSource, drops, i, lastHurtByPlayerTime > 0)) {
                     drops.forEach(e -> {
-                        e.setItem(new ItemStack(RandomizerData.getInstance(level.getServer().overworld()).getRandomizedItemForMob(e.getItem().getItem(), true), e.getItem().getCount()));
+                        e.setItem(new ItemStack(RandomizerData.getInstance(level.getServer().overworld(), damageSource.getEntity()).getRandomizedItemForMob(e.getItem().getItem(), true), e.getItem().getCount()));
                         level.addFreshEntity(e);
                     });
                 }

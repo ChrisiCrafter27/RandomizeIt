@@ -9,12 +9,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,11 +28,11 @@ import java.util.Random;
 
 public class RandomizerData extends SavedData {
     private static RandomizerData instance;
-    private final HashMap<Item, Item> blockDrops;
-    private final HashMap<Item, Item> entityDrops;
-    private final HashMap<Item, Item> craftingResult;
-    private final HashMap<Item, Item> chestLoot;
-    private int time;
+    protected final HashMap<Item, Item> blockDrops;
+    protected final HashMap<Item, Item> entityDrops;
+    protected final HashMap<Item, Item> craftingResult;
+    protected final HashMap<Item, Item> chestLoot;
+    protected int time;
 
     public static Factory<RandomizerData> factory() {
         return new Factory<>(RandomizerData::new, RandomizerData::load, DataFixTypes.LEVEL);
@@ -138,8 +141,12 @@ public class RandomizerData extends SavedData {
         instance = server.overworld().getDataStorage().computeIfAbsent(RandomizerData.factory(), "randomizer_data");
     }
 
-    public static RandomizerData getInstance(ServerLevel level) {
+    public static RandomizerData getInstance(ServerLevel level, Entity entity) {
         if(instance == null) instance = level.getServer().overworld().getDataStorage().computeIfAbsent(RandomizerData.factory(), "randomizer_data");
+        if(level.getGameRules().getBoolean(ModGameRules.PLAYER_UNIQUE_DATA) && entity instanceof ServerPlayer player) {
+            LazyOptional<RandomizerCapability> optional = player.getCapability(RandomizerCapability.CAPABILITY);
+            return optional.<RandomizerData>cast().orElse(instance);
+        }
         return instance;
     }
 

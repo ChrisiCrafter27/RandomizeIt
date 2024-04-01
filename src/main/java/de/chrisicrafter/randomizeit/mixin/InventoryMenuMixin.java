@@ -51,7 +51,7 @@ public abstract class InventoryMenuMixin extends RecipeBookMenu<CraftingContaine
 
     @Unique ItemStack randomizeIt$getRandomized(ItemStack item, Player player, int slot) {
         if(player.level() instanceof ServerLevel level && level.getGameRules().getBoolean(ModGameRules.RANDOM_CRAFTING_RESULT) && slot == 0 && !item.is(Items.AIR))
-            return new ItemStack(RandomizerData.getInstance(level).getRandomizedItemForRecipe(item.getItem(), true), item.getCount());
+            return new ItemStack(RandomizerData.getInstance(level, player).getRandomizedItemForRecipe(item.getItem(), true), item.getCount());
         else return item;
     }
 

@@ -8,10 +8,20 @@
   "gamerule.randomRandomizerToggleInterval": "Random randomizer toggle interval",
   "gamerule.randomRandomizerToggleInterval.description": "Interval in minutes. Set to 0 to disable",
   "gamerule.announceRandomizerToggle": "Announce randomizer toggles",
+  "gamerule.playerUniqueData": "Randomized stuff is player-unique",
 
-  "commands.randomizeit.randomize.reset.all": "Reset all item mutations",
-  "commands.randomizeit.randomize.reset.one": "Reset item mutations for %s",
-  "commands.randomizeit.randomize.get.success": "%s: %s -> %s -> %s",
-  "commands.randomizeit.randomize.set.success": "Item mutation set in %s:\n %s -> %s",
-  "commands.randomizeit.randomize.set.failure": "Item mutation in %s was already set:\n %s -> %s"
+  "commands.randomizeit.randomize.reset.all.server": "Reset all item mutations",
+  "commands.randomizeit.randomize.reset.all.player.zero": "Reset all item mutations for no players",
+  "commands.randomizeit.randomize.reset.all.player.one": "Reset all item mutations for %s",
+  "commands.randomizeit.randomize.reset.all.player.multiple": "Reset all item mutations for %s players",
+  "commands.randomizeit.randomize.reset.one.server": "Reset item mutations of type %s",
+  "commands.randomizeit.randomize.reset.one.player.zero": "Reset item mutations of type %s for no players",
+  "commands.randomizeit.randomize.reset.one.player.one": "Reset item mutations of type %s for %s",
+  "commands.randomizeit.randomize.reset.one.player.multiple": "Reset item mutations of type %s for %s players",
+  "commands.randomizeit.randomize.get.success": "%s: %s -> %s -> %s (%s)",
+  "commands.randomizeit.randomize.set.success.server": "Item mutation set in %s:\n%s -> %s",
+  "commands.randomizeit.randomize.set.success.player.zero": "Item mutation set in %s for no players:\n%s -> %s",
+  "commands.randomizeit.randomize.set.success.player.one": "Item mutation set in %s for %s:\n%s -> %s",
+  "commands.randomizeit.randomize.set.success.player.multiple": "Item mutation set in %s for %s players:\n%s -> %s",
+  "commands.randomizeit.randomize.set.failure": "Item mutation in %s was already set:\n%s -> %s"
 }

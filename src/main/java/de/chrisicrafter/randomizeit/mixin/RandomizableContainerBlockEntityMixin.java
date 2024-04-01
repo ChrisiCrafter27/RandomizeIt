@@ -66,7 +66,7 @@ public abstract class RandomizableContainerBlockEntityMixin extends BaseContaine
             NonNullList<ItemStack> items = getItems();
             items.replaceAll(item -> {
                 if(item.is(Items.AIR) || item.getCount() == 0) return item;
-                return new ItemStack(randomizeIt$getRandomizedItem((ServerLevel) this.level, item.getItem()), item.getCount());
+                return new ItemStack(randomizeIt$getRandomizedItem((ServerLevel) this.level, player, item.getItem()), item.getCount());
             });
             setItems(items);
 
@@ -75,11 +75,11 @@ public abstract class RandomizableContainerBlockEntityMixin extends BaseContaine
     }
 
     @Unique
-    private Item randomizeIt$getRandomizedItem(ServerLevel level, Item item) {
+    private Item randomizeIt$getRandomizedItem(ServerLevel level, Player player, Item item) {
         if(level.getGameRules().getBoolean(ModGameRules.STATIC_CHEST_LOOT)) {
-            return RandomizerData.getInstance(level).getStaticRandomizedItemForLoot(item, true);
+            return RandomizerData.getInstance(level, player).getStaticRandomizedItemForLoot(item, true);
         } else {
-            if(!randomizeIt$map.containsKey(item)) randomizeIt$map.put(item, RandomizerData.getInstance(level).getUniqueRandomizedItemForLoot());
+            if(!randomizeIt$map.containsKey(item)) randomizeIt$map.put(item, RandomizerData.getInstance(level, player).getUniqueRandomizedItemForLoot());
             return randomizeIt$map.get(item);
         }
     }
