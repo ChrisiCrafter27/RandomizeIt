@@ -12,12 +12,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.event.ForgeEventFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 @Mixin(LivingEntity.class)
@@ -29,37 +32,39 @@ public abstract class LivingEntityMixin extends Entity {
     @Shadow protected int lastHurtByPlayerTime;
 
     @Shadow protected abstract boolean shouldDropLoot();
-    @Shadow protected abstract void dropFromLootTable(DamageSource damageSource, boolean playerKill);
-    @Shadow protected abstract void dropCustomDeathLoot(DamageSource damageSource, int lootingLevel, boolean playerKill);
-    @Shadow protected abstract void dropEquipment();
-    @Shadow protected abstract void dropExperience();
+    @Shadow protected abstract void dropFromLootTable(ServerLevel level, DamageSource damageSource, boolean playerKill);
+    @Shadow protected abstract void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean playerKill);
+    @Shadow protected abstract void dropEquipment(ServerLevel level);
+    @Shadow protected abstract void dropExperience(ServerLevel level, Entity entity);
 
     @Inject(method = "dropAllDeathLoot", at = @At("HEAD"), cancellable = true)
-    public void dropAllDeathLoot(DamageSource damageSource, CallbackInfo info) {
-        if(level().getGameRules().getBoolean(ModGameRules.RANDOM_MOB_DROPS) && !((LivingEntity) (Object) this instanceof Player)) {
-            if(level() instanceof ServerLevel level) {
-                Entity entity = damageSource.getEntity();
+    public void dropAllDeathLoot(ServerLevel level, DamageSource damageSource, CallbackInfo info) {
+        if(level.getGameRules().getBoolean(ModGameRules.RANDOM_MOB_DROPS)) {
+            this.dropExperience(level, damageSource.getEntity());
 
-                int i = net.minecraftforge.common.ForgeHooks.getLootingLevel(this, entity, damageSource);
-                this.captureDrops(new java.util.ArrayList<>());
-
-                boolean flag = this.lastHurtByPlayerTime > 0;
-                if (this.shouldDropLoot() && level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
-                    this.dropFromLootTable(damageSource, flag);
-                    this.dropCustomDeathLoot(damageSource, i, flag);
-                }
-
-                this.dropEquipment();
-                this.dropExperience();
-
-                Collection<ItemEntity> drops = captureDrops(null);
-                if (!net.minecraftforge.common.ForgeHooks.onLivingDrops((LivingEntity) (Object) this, damageSource, drops, i, lastHurtByPlayerTime > 0)) {
-                    drops.forEach(e -> {
+            this.captureDrops(new ArrayList<>());
+            boolean flag = this.lastHurtByPlayerTime > 0;
+            if (this.shouldDropLoot() && level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
+                this.dropFromLootTable(level, damageSource, flag);
+                this.dropCustomDeathLoot(level, damageSource, flag);
+            }
+            Collection<ItemEntity> drops = captureDrops();
+            if (!ForgeEventFactory.onLivingDrops((LivingEntity) (Object) this, damageSource, drops, lastHurtByPlayerTime > 0)) {
+                drops.forEach(e -> {
+                    if(!level.getGameRules().getBoolean(ModGameRules.PLAYER_UNIQUE_DATA) || damageSource.getEntity() instanceof Player) {
                         e.setItem(new ItemStack(RandomizerData.getInstance(level.getServer().overworld(), damageSource.getEntity()).getRandomizedItemForMob(e.getItem().getItem(), true), e.getItem().getCount()));
                         level.addFreshEntity(e);
-                    });
-                }
+                    }
+                });
             }
+
+            this.captureDrops(new ArrayList<>());
+            this.dropEquipment(level);
+            Collection<ItemEntity> equipment = captureDrops();
+            if (!ForgeEventFactory.onLivingDrops((LivingEntity) (Object) this, damageSource, drops, lastHurtByPlayerTime > 0)) {
+                equipment.forEach(e -> level().addFreshEntity(e));
+            }
+
             info.cancel();
         }
     }

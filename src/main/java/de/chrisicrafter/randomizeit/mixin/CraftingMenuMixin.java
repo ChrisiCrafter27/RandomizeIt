@@ -3,6 +3,7 @@ package de.chrisicrafter.randomizeit.mixin;
 import com.google.common.collect.Sets;
 import com.mojang.logging.LogUtils;
 import de.chrisicrafter.randomizeit.data.RandomizerData;
+import de.chrisicrafter.randomizeit.data.client.GameruleData;
 import de.chrisicrafter.randomizeit.gamerule.ModGameRules;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
@@ -16,6 +17,7 @@ import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraftforge.event.ForgeEventFactory;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -28,7 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Mixin(CraftingMenu.class)
-public abstract class CraftingMenuMixin extends RecipeBookMenu<CraftingContainer> {
+public abstract class CraftingMenuMixin extends RecipeBookMenu {
     @Unique private final MenuType<?> randomizeIt$menuType;
     @Unique private int randomizeIt$quickcraftType = -1;
     @Unique private int randomizeIt$quickcraftStatus;
@@ -57,7 +59,8 @@ public abstract class CraftingMenuMixin extends RecipeBookMenu<CraftingContainer
 
     @Override
     public void clicked(int slotId, int buttonId, @NotNull ClickType clickType, Player player) {
-        if(!player.level().getGameRules().getBoolean(ModGameRules.RANDOM_CRAFTING_RESULT) && slotId == 0) {
+        boolean randomCraftingResult = player.level() instanceof ServerLevel level ? level.getGameRules().getBoolean(ModGameRules.RANDOM_CRAFTING_RESULT) : GameruleData.randomCraftingResult.enabled;
+        if(!randomCraftingResult || slotId != 0) {
             super.clicked(slotId, buttonId, clickType, player);
             return;
         }
@@ -171,7 +174,7 @@ public abstract class CraftingMenuMixin extends RecipeBookMenu<CraftingContainer
 
                 player.updateTutorialInventoryAction(itemstack10, randomizeIt$getRandomized(slot7, player, slotId), clickaction);
                 if (!this.randomizeIt$tryItemClickBehaviourOverride(player, clickaction, slot7, itemstack9, itemstack10)) {
-                    if (!net.minecraftforge.common.ForgeHooks.onItemStackedOn(itemstack9, itemstack10, slot7, clickaction, player, randomizeIt$createCarriedSlotAccess()))
+                    if (!ForgeEventFactory.onItemStackedOn(itemstack9, itemstack10, slot7, clickaction, player, randomizeIt$createCarriedSlotAccess()))
                         if (itemstack9.isEmpty()) {
                             if (!itemstack10.isEmpty()) {
                                 int i3 = clickaction == ClickAction.PRIMARY ? itemstack10.getCount() : 1;
@@ -186,14 +189,14 @@ public abstract class CraftingMenuMixin extends RecipeBookMenu<CraftingContainer
                                     slot7.onTake(player, item);
                                 });
                             } else if (slot7.mayPlace(itemstack10)) {
-                                if (ItemStack.isSameItemSameTags(itemstack9, itemstack10)) {
+                                if (ItemStack.isSameItemSameComponents(itemstack9, itemstack10)) {
                                     int k3 = clickaction == ClickAction.PRIMARY ? itemstack10.getCount() : 1;
                                     this.setCarried(randomizeIt$getRandomized(slot7.safeInsert(itemstack10, k3), player, slotId));
                                 } else if (itemstack10.getCount() <= slot7.getMaxStackSize(itemstack10)) {
                                     this.setCarried(randomizeIt$getRandomized(itemstack9, player, slotId));
                                     slot7.setByPlayer(itemstack10);
                                 }
-                            } else if (ItemStack.isSameItemSameTags(itemstack9, itemstack10)) {
+                            } else if (ItemStack.isSameItemSameComponents(itemstack9, itemstack10)) {
                                 Optional<ItemStack> optional = slot7.tryRemove(itemstack9.getCount(), itemstack10.getMaxStackSize() - itemstack10.getCount(), player);
                                 optional.ifPresent((p_150428_) -> {
                                     itemstack10.grow(p_150428_.getCount());
@@ -299,7 +302,7 @@ public abstract class CraftingMenuMixin extends RecipeBookMenu<CraftingContainer
     @Unique
     private SlotAccess randomizeIt$createCarriedSlotAccess() {
         return new SlotAccess() {
-            public ItemStack get() {
+            public @NotNull ItemStack get() {
                 return ((CraftingMenu) (Object) this).getCarried();
             }
 

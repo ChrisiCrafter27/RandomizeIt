@@ -2,9 +2,10 @@ package de.chrisicrafter.randomizeit.command;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import de.chrisicrafter.randomizeit.data.RandomizerData;
-import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -127,10 +128,10 @@ public class RandomizeCommand {
         return 1;
     }
 
-    private static int get(CommandContext<CommandSourceStack> context, ServerPlayer player, ResourceLocation id, Type type) {
+    private static int get(CommandContext<CommandSourceStack> context, ServerPlayer player, ResourceLocation id, Type type) throws CommandSyntaxException {
         Item key = ForgeRegistries.ITEMS.getValue(id);
         if(key == null || key == Items.AIR) {
-            throw new CommandRuntimeException(Component.literal("Not an item: " + id.toString()));
+            throw new SimpleCommandExceptionType(Component.literal("Not an item: " + id.toString())).create();
         }
         Item value1 = switch (type) {
             case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel(), player).blockDropsSource(key);
@@ -154,14 +155,14 @@ public class RandomizeCommand {
         return 1;
     }
 
-    private static int set(CommandContext<CommandSourceStack> context, ResourceLocation id1, ResourceLocation id2, Type type, boolean replace) {
+    private static int set(CommandContext<CommandSourceStack> context, ResourceLocation id1, ResourceLocation id2, Type type, boolean replace) throws CommandSyntaxException {
         Item key = ForgeRegistries.ITEMS.getValue(id1);
         if(key == null || key == Items.AIR) {
-            throw new CommandRuntimeException(Component.literal("Not an item: " + id1.toString()));
+            throw new SimpleCommandExceptionType(Component.literal("Not an item: " + id1.toString())).create();
         }
         Item value = ForgeRegistries.ITEMS.getValue(id2);
         if(value == null || value == Items.AIR) {
-            throw new CommandRuntimeException(Component.literal("Not an item: " + id2.toString()));
+            throw new SimpleCommandExceptionType(Component.literal("Not an item: " + id2.toString())).create();
         }
         Item previous = switch (type) {
             case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel(), null).getRandomizedItemForBlock(key, false);
@@ -182,7 +183,7 @@ public class RandomizeCommand {
             case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel(), null).setMobDrop(key, value);
             case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel(), null).setCraftingResult(key, value);
             case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel(), null).setChestLoot(key, value);
-        };
+        }
         context.getSource().sendSuccess(() -> Component.translatable(
                 "commands.randomizeit.randomize.set.success.server",
                 type.toString(),
@@ -191,14 +192,14 @@ public class RandomizeCommand {
         return 1;
     }
 
-    private static int set(CommandContext<CommandSourceStack> context, Collection<ServerPlayer> players, ResourceLocation id1, ResourceLocation id2, Type type, boolean replace) {
+    private static int set(CommandContext<CommandSourceStack> context, Collection<ServerPlayer> players, ResourceLocation id1, ResourceLocation id2, Type type, boolean replace) throws CommandSyntaxException {
         Item key = ForgeRegistries.ITEMS.getValue(id1);
         if(key == null || key == Items.AIR) {
-            throw new CommandRuntimeException(Component.literal("Not an item: " + id1.toString()));
+            throw new SimpleCommandExceptionType(Component.literal("Not an item: " + id1.toString())).create();
         }
         Item value = ForgeRegistries.ITEMS.getValue(id2);
         if(value == null || value == Items.AIR) {
-            throw new CommandRuntimeException(Component.literal("Not an item: " + id2.toString()));
+            throw new SimpleCommandExceptionType(Component.literal("Not an item: " + id2.toString())).create();
         }
         int count = 0;
         for(ServerPlayer player : players) {
@@ -221,7 +222,7 @@ public class RandomizeCommand {
                 case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel(), player).setMobDrop(key, value);
                 case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel(), player).setCraftingResult(key, value);
                 case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel(), player).setChestLoot(key, value);
-            };
+            }
             count++;
         }
         final int finalCount = count;

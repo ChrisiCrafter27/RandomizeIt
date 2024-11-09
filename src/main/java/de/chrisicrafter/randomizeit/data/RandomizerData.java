@@ -1,11 +1,9 @@
 package de.chrisicrafter.randomizeit.data;
 
 import de.chrisicrafter.randomizeit.gamerule.ModGameRules;
-import de.chrisicrafter.randomizeit.networking.ModMessages;
-import de.chrisicrafter.randomizeit.networking.packet.UpdateRandomizerDataS2CPacket;
 import de.chrisicrafter.randomizeit.utils.MapUtils;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -15,7 +13,6 @@ import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -24,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class RandomizerData extends SavedData {
     private static RandomizerData instance;
@@ -33,6 +29,7 @@ public class RandomizerData extends SavedData {
     protected final HashMap<Item, Item> craftingResult;
     protected final HashMap<Item, Item> chestLoot;
     protected int time;
+    protected boolean sendData;
 
     public static Factory<RandomizerData> factory() {
         return new Factory<>(RandomizerData::new, RandomizerData::load, DataFixTypes.LEVEL);
@@ -51,6 +48,10 @@ public class RandomizerData extends SavedData {
     }
 
     @Override
+    public @NotNull CompoundTag save(CompoundTag tag, HolderLookup.@NotNull Provider provider) {
+        return save(tag);
+    }
+
     public @NotNull CompoundTag save(CompoundTag tag) {
         int size1 = blockDrops.size();
         tag.putInt("block_drops", size1);
@@ -97,6 +98,10 @@ public class RandomizerData extends SavedData {
         return tag;
     }
 
+    public static RandomizerData load(CompoundTag tag, HolderLookup.Provider provider) {
+        return load(tag);
+    }
+
     public static RandomizerData load(CompoundTag tag) {
         HashMap<Item, Item> blockDrops = new HashMap<>();
 
@@ -134,7 +139,14 @@ public class RandomizerData extends SavedData {
     @Override
     public void setDirty() {
         super.setDirty();
-        ModMessages.sendToPlayer(new UpdateRandomizerDataS2CPacket(this));
+        sendData = true;
+    }
+
+    public boolean sendData() {
+        if(sendData) {
+            sendData = false;
+            return true;
+        } else return false;
     }
 
     public static void setInstance(MinecraftServer server) {
@@ -154,12 +166,12 @@ public class RandomizerData extends SavedData {
         if(level.getGameRules().getInt(ModGameRules.RANDOM_RANDOMIZER_TOGGLE_INTERVAL) != 0) {
             time++;
             if(time >= level.getGameRules().getInt(ModGameRules.RANDOM_RANDOMIZER_TOGGLE_INTERVAL) * 1200) {
-                int random = new Random().nextInt(1, 5);
+                int random = RandomSource.create().nextInt(4);
                 GameRules.BooleanValue value = switch (random) {
-                    case 1 -> level.getGameRules().getRule(ModGameRules.RANDOM_BLOCK_DROPS);
-                    case 2 -> level.getGameRules().getRule(ModGameRules.RANDOM_MOB_DROPS);
-                    case 3 -> level.getGameRules().getRule(ModGameRules.RANDOM_CHEST_LOOT);
-                    case 4 -> level.getGameRules().getRule(ModGameRules.RANDOM_CRAFTING_RESULT);
+                    case 0 -> level.getGameRules().getRule(ModGameRules.RANDOM_BLOCK_DROPS);
+                    case 1 -> level.getGameRules().getRule(ModGameRules.RANDOM_MOB_DROPS);
+                    case 2 -> level.getGameRules().getRule(ModGameRules.RANDOM_CHEST_LOOT);
+                    case 3 -> level.getGameRules().getRule(ModGameRules.RANDOM_CRAFTING_RESULT);
                     default -> throw new IllegalStateException();
                 };
                 value.set(!value.get(), level.getServer());
@@ -172,7 +184,7 @@ public class RandomizerData extends SavedData {
     public Item getRandomizedItemForBlock(Item key, boolean computeIfAbsent) {
         if(!blockDrops.containsKey(key) && computeIfAbsent) {
             List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(block -> !blockDrops.containsValue(block)).toList();
-            blockDrops.put(key, list.get(RandomSource.create().nextInt(0, list.size())));
+            blockDrops.put(key, list.get(RandomSource.create().nextInt(list.size())));
             setDirty();
         }
         return blockDrops.get(key);
@@ -181,7 +193,7 @@ public class RandomizerData extends SavedData {
     public Item getRandomizedItemForMob(Item key, boolean computeIfAbsent) {
         if(!entityDrops.containsKey(key) && computeIfAbsent) {
             List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(entity -> !entityDrops.containsValue(entity)).toList();
-            entityDrops.put(key, list.get(RandomSource.create().nextInt(0, list.size())));
+            entityDrops.put(key, list.get(RandomSource.create().nextInt(list.size())));
             setDirty();
         }
         return entityDrops.get(key);
@@ -190,7 +202,7 @@ public class RandomizerData extends SavedData {
     public Item getRandomizedItemForRecipe(Item key, boolean computeIfAbsent) {
         if(!craftingResult.containsKey(key) && computeIfAbsent) {
             List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(entity -> !craftingResult.containsValue(entity)).toList();
-            craftingResult.put(key, list.get(RandomSource.create().nextInt(0, list.size())));
+            craftingResult.put(key, list.get(RandomSource.create().nextInt(list.size())));
             setDirty();
         }
         return craftingResult.get(key);
@@ -199,7 +211,7 @@ public class RandomizerData extends SavedData {
     public Item getStaticRandomizedItemForLoot(Item key, boolean computeIfAbsent) {
         if(!chestLoot.containsKey(key) && computeIfAbsent) {
             List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(entity -> !chestLoot.containsValue(entity)).toList();
-            chestLoot.put(key, list.get(RandomSource.create().nextInt(0, list.size())));
+            chestLoot.put(key, list.get(RandomSource.create().nextInt(list.size())));
             setDirty();
         }
         return chestLoot.get(key);
@@ -207,7 +219,7 @@ public class RandomizerData extends SavedData {
 
     public Item getUniqueRandomizedItemForLoot() {
         List<Item> list = ForgeRegistries.ITEMS.getValues().stream().toList();
-        return list.get(RandomSource.create().nextInt(0, list.size()));
+        return list.get(RandomSource.create().nextInt(list.size()));
     }
 
     public Item blockDropsSource(Item item) {
