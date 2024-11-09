@@ -19,7 +19,7 @@ public class ModMessages {
     }
 
     public static void register() {
-        SimpleChannel net = ChannelBuilder.named(new ResourceLocation(RandomizeIt.MOD_ID, "messages"))
+        SimpleChannel net = ChannelBuilder.named(ResourceLocation.fromNamespaceAndPath(RandomizeIt.MOD_ID, "messages"))
                 .networkProtocolVersion(1)
                 .clientAcceptedVersions((status, version) -> true)
                 .serverAcceptedVersions((status, version) -> true)

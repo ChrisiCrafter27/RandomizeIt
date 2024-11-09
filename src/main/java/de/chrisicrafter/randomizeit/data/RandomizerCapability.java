@@ -1,6 +1,9 @@
 package de.chrisicrafter.randomizeit.data;
 
+import de.chrisicrafter.randomizeit.networking.ModMessages;
+import de.chrisicrafter.randomizeit.networking.packet.UpdateRandomizerDataS2CPacket;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.common.capabilities.*;
@@ -29,12 +32,12 @@ public class RandomizerCapability extends RandomizerData implements ICapabilityS
     }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
         return save(new CompoundTag());
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
         copyOf(RandomizerData.load(nbt));
     }
 
