@@ -5,11 +5,15 @@
   "gamerule.randomCraftingResult": "Random Crafting Results",
   "gamerule.randomChestLoot": "Random Chest Loot",
   "gamerule.staticChestLoot": "Static Chest Loot",
-  "gamerule.randomRandomizerToggleInterval": "Random randomizer toggle interval",
-  "gamerule.randomRandomizerToggleInterval.description": "Interval in minutes. Set to 0 to disable",
   "gamerule.announceRandomizerToggle": "Announce randomizer toggles",
   "gamerule.playerUniqueData": "Randomized stuff is player-unique",
   "gamerule.ignoreToolForRandomBlockDrop": "Ignore tool when randomBlockDrops is enabled",
+  "gamerule.discoveryAnnouncementRarityLevel": "Minimum item rarity level to announce as new discovery",
+
+  "message.discovered.block": "%s discovered: Block drop %s is %s",
+  "message.discovered.mob": "%s discovered: Mob drop %s is %s",
+  "message.discovered.craft": "%s discovered: Crafting %s gives %s",
+  "message.discovered.loot": "%s discovered: Looting %s gives %s",
 
   "commands.randomizeit.randomize.reset.all.server": "Reset all item mutations",
   "commands.randomizeit.randomize.reset.all.player.zero": "Reset all item mutations for no players",
@@ -24,5 +28,7 @@
   "commands.randomizeit.randomize.set.success.player.zero": "Item mutation set in %s for no players:\n%s -> %s",
   "commands.randomizeit.randomize.set.success.player.one": "Item mutation set in %s for %s:\n%s -> %s",
   "commands.randomizeit.randomize.set.success.player.multiple": "Item mutation set in %s for %s players:\n%s -> %s",
-  "commands.randomizeit.randomize.set.failure": "Item mutation in %s was already set:\n%s -> %s"
+  "commands.randomizeit.randomize.set.failure": "Item mutation in %s was already set:\n%s -> %s",
+  "just_that": "%s",
+  "just_these": "text %s text %s"
 }

@@ -3,12 +3,12 @@ package de.chrisicrafter.randomizeit.mixin;
 import de.chrisicrafter.randomizeit.data.RandomizerData;
 import de.chrisicrafter.randomizeit.gamerule.ModGameRules;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
@@ -51,8 +51,11 @@ public abstract class LivingEntityMixin extends Entity {
             assert drops != null;
             if (!CommonHooks.onLivingDrops((LivingEntity) (Object) this, damageSource, drops, lastHurtByPlayerTime > 0)) {
                 drops.forEach(e -> {
-                    if(!level.getGameRules().getBoolean(ModGameRules.PLAYER_UNIQUE_DATA) || damageSource.getEntity() instanceof Player) {
-                        e.setItem(new ItemStack(RandomizerData.getInstance(level.getServer().overworld(), damageSource.getEntity()).getRandomizedItemForMob(e.getItem().getItem(), level, true), e.getItem().getCount()));
+                    if(damageSource.getEntity() instanceof ServerPlayer player) {
+                        e.setItem(new ItemStack(RandomizerData.getInstance(level.getServer().overworld(), damageSource.getEntity()).getRandomizedItemForMob(e.getItem().getItem(), player, level, true), e.getItem().getCount()));
+                        level.addFreshEntity(e);
+                    } else if(!level.getGameRules().getBoolean(ModGameRules.PLAYER_UNIQUE_DATA)) {
+                        e.setItem(new ItemStack(RandomizerData.getInstance(level.getServer().overworld(), damageSource.getEntity()).getRandomizedItemForMob(e.getItem().getItem(), null, level, true), e.getItem().getCount()));
                         level.addFreshEntity(e);
                     }
                 });

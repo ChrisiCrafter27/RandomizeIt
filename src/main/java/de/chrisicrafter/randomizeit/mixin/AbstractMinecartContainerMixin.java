@@ -65,16 +65,16 @@ public abstract class AbstractMinecartContainerMixin extends AbstractMinecart im
 
             if (minecraftserver.getGameRules().getBoolean(ModGameRules.RANDOM_CHEST_LOOT)) {
                 for(int i = 0; i < getContainerSize(); i++) {
-                    setItem(i, new ItemStack(randomizeIt$getRandomizedItem((ServerLevel) level(), player, getItem(i).getItem()), getItem(i).getCount()));
+                    setItem(i, new ItemStack(randomizeIt$getRandomizedItem((ServerLevel) level(), (ServerPlayer) player, getItem(i).getItem()), getItem(i).getCount()));
                 }
             }
         }
     }
 
     @Unique
-    private Item randomizeIt$getRandomizedItem(ServerLevel level, Player player, Item item) {
+    private Item randomizeIt$getRandomizedItem(ServerLevel level, ServerPlayer player, Item item) {
         if(level.getGameRules().getBoolean(ModGameRules.STATIC_CHEST_LOOT)) {
-            return RandomizerData.getInstance(level, player).getStaticRandomizedItemForLoot(item, level, true);
+            return RandomizerData.getInstance(level, player).getStaticRandomizedItemForLoot(item, player, level, true);
         } else {
             if(!randomizeIt$map.containsKey(item)) randomizeIt$map.put(item, RandomizerData.getInstance(level, player).getUniqueRandomizedItemForLoot(level));
             return randomizeIt$map.get(item);

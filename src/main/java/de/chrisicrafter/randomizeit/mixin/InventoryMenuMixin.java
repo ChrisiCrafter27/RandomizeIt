@@ -3,13 +3,12 @@ package de.chrisicrafter.randomizeit.mixin;
 import com.google.common.collect.Sets;
 import com.mojang.logging.LogUtils;
 import de.chrisicrafter.randomizeit.data.RandomizerData;
-import de.chrisicrafter.randomizeit.data.client.GameruleData;
 import de.chrisicrafter.randomizeit.gamerule.ModGameRules;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -53,8 +52,8 @@ public abstract class InventoryMenuMixin extends RecipeBookMenu {
     }
 
     @Unique ItemStack randomizeIt$getRandomized(ItemStack item, Player player, int slot) {
-        if(player.level() instanceof ServerLevel level && level.getGameRules().getBoolean(ModGameRules.RANDOM_CRAFTING_RESULT) && slot == 0 && !item.is(Items.AIR))
-            return new ItemStack(RandomizerData.getInstance(level, player).getRandomizedItemForRecipe(item.getItem(), level, true), item.getCount());
+        if(player instanceof ServerPlayer serverPlayer && serverPlayer.serverLevel().getGameRules().getBoolean(ModGameRules.RANDOM_CRAFTING_RESULT) && slot == 0 && !item.is(Items.AIR))
+            return new ItemStack(RandomizerData.getInstance(serverPlayer.serverLevel(), player).getRandomizedItemForRecipe(item.getItem(), serverPlayer, serverPlayer.serverLevel(), true), item.getCount());
         else return item;
     }
 

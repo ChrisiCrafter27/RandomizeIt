@@ -1,50 +1,64 @@
 package de.chrisicrafter.randomizeit.data;
 
+import de.chrisicrafter.randomizeit.RandomizeIt;
 import de.chrisicrafter.randomizeit.gamerule.ModGameRules;
+import de.chrisicrafter.randomizeit.networking.PlayUiSoundS2CPayload;
 import de.chrisicrafter.randomizeit.utils.MapUtils;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.GameMasterBlockItem;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class RandomizerData extends SavedData {
+    private static final SoundEvent COMMON = SoundEvents.PLAYER_LEVELUP;
+    private static final SoundEvent UNCOMMON = SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(RandomizeIt.MOD_ID, "discovery.uncommon"));
+    private static final SoundEvent RARE = SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(RandomizeIt.MOD_ID, "discovery.rare"));
+    private static final SoundEvent EPIC = SoundEvents.UI_TOAST_CHALLENGE_COMPLETE;
+
     private static RandomizerData instance;
     protected final HashMap<Item, Item> blockDrops;
     protected final HashMap<Item, Item> entityDrops;
     protected final HashMap<Item, Item> craftingResult;
     protected final HashMap<Item, Item> chestLoot;
-    protected int time;
     protected boolean sendData;
+    private static int requestedSound = -1;
 
     public static Factory<RandomizerData> factory() {
         return new Factory<>(RandomizerData::new, RandomizerData::load, DataFixTypes.LEVEL);
     }
 
     private RandomizerData() {
-        this(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), 0);
+        this(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
     }
 
-    public RandomizerData(HashMap<Item, Item> blockDrops, HashMap<Item, Item> entityDrops, HashMap<Item, Item> craftingResult, HashMap<Item, Item> chestLoot, int time) {
+    public RandomizerData(HashMap<Item, Item> blockDrops, HashMap<Item, Item> entityDrops, HashMap<Item, Item> craftingResult, HashMap<Item, Item> chestLoot) {
         this.blockDrops = blockDrops;
         this.entityDrops = entityDrops;
         this.craftingResult = craftingResult;
         this.chestLoot = chestLoot;
-        this.time = time;
     }
 
     @Override
@@ -93,8 +107,6 @@ public class RandomizerData extends SavedData {
             i4++;
         }
 
-        tag.putInt("time", time);
-
         return tag;
     }
 
@@ -131,9 +143,7 @@ public class RandomizerData extends SavedData {
             chestLoots.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_v" + i))));
         }
 
-        int time = tag.getInt("time");
-
-        return new RandomizerData(blockDrops, entityDrops, craftingResult, chestLoots, time);
+        return new RandomizerData(blockDrops, entityDrops, craftingResult, chestLoots);
     }
 
     @Override
@@ -161,64 +171,113 @@ public class RandomizerData extends SavedData {
         return instance;
     }
 
-    public void doTick(ServerLevel level) {
-        if(level.getGameRules().getInt(ModGameRules.RANDOM_RANDOMIZER_TOGGLE_INTERVAL) != 0) {
-            time++;
-            if(time >= level.getGameRules().getInt(ModGameRules.RANDOM_RANDOMIZER_TOGGLE_INTERVAL) * 1200) {
-                int random = RandomSource.create().nextInt(4);
-                GameRules.BooleanValue value = switch (random) {
-                    case 0 -> level.getGameRules().getRule(ModGameRules.RANDOM_BLOCK_DROPS);
-                    case 1 -> level.getGameRules().getRule(ModGameRules.RANDOM_MOB_DROPS);
-                    case 2 -> level.getGameRules().getRule(ModGameRules.RANDOM_CHEST_LOOT);
-                    case 3 -> level.getGameRules().getRule(ModGameRules.RANDOM_CRAFTING_RESULT);
-                    default -> throw new IllegalStateException();
-                };
-                value.set(!value.get(), level.getServer());
-                time = 0;
-            }
-            setDirty(true);
+    public static void doTick() {
+        if(requestedSound >= 0) {
+            SoundEvent soundEvent = switch (requestedSound) {
+                case 0 -> COMMON;
+                case 1 -> UNCOMMON;
+                case 2 -> RARE;
+                case 3 -> EPIC;
+                default -> throw new IllegalStateException("Unexpected value: " + requestedSound);
+            };
+            PacketDistributor.sendToAllPlayers(new PlayUiSoundS2CPayload(soundEvent));
+            requestedSound = -1;
         }
     }
 
-    public Item getRandomizedItemForBlock(Item key, ServerLevel serverLevel, boolean computeIfAbsent) {
+    public Item getRandomizedItemForBlock(Item key, ServerPlayer player, ServerLevel level, boolean computeIfAbsent) {
         if(!blockDrops.containsKey(key) && computeIfAbsent) {
-            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(serverLevel.enabledFeatures())).filter(item -> !blockDrops.containsValue(item)).toList();
-            blockDrops.put(key, list.get(RandomSource.create().nextInt(list.size())));
+            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(level.enabledFeatures())).filter(item -> !blockDrops.containsValue(item)).toList();
+            Item value = list.get(RandomSource.create().nextInt(list.size()));
+            blockDrops.put(key, value);
+            int rarityInt = toInt(value.components().get(DataComponents.RARITY));
+            if(level.getGameRules().getInt(ModGameRules.DISCOVERY_ANNOUNCEMENT_RARITY_LEVEL) <= rarityInt) {
+                if(requestedSound < rarityInt) requestedSound = rarityInt;
+                level.getServer().getPlayerList().broadcastSystemMessage(Component.translatable(
+                                "message.discovered.block",
+                                player != null ? Objects.requireNonNull(player.getDisplayName()).copy().withStyle(ChatFormatting.WHITE) : Component.literal("Server").withStyle(ChatFormatting.WHITE),
+                                new ItemStack(key).getDisplayName(),
+                                new ItemStack(value).getDisplayName())
+                        , false);
+            }
             setDirty();
         }
         return blockDrops.get(key);
     }
 
-    public Item getRandomizedItemForMob(Item key, ServerLevel serverLevel, boolean computeIfAbsent) {
+    public Item getRandomizedItemForMob(Item key, ServerPlayer player, ServerLevel level, boolean computeIfAbsent) {
         if(!entityDrops.containsKey(key) && computeIfAbsent) {
-            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(serverLevel.enabledFeatures())).filter(item -> !entityDrops.containsValue(item)).toList();
-            entityDrops.put(key, list.get(RandomSource.create().nextInt(list.size())));
+            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(level.enabledFeatures())).filter(item -> !entityDrops.containsValue(item)).toList();
+            Item value = list.get(RandomSource.create().nextInt(list.size()));
+            entityDrops.put(key, value);
+            int rarityInt = toInt(value.components().get(DataComponents.RARITY));
+            if(level.getGameRules().getInt(ModGameRules.DISCOVERY_ANNOUNCEMENT_RARITY_LEVEL) <= rarityInt) {
+                if(requestedSound < rarityInt) requestedSound = rarityInt;
+                level.getServer().getPlayerList().broadcastSystemMessage(Component.translatable(
+                                "message.discovered.mob",
+                                player != null ? Objects.requireNonNull(player.getDisplayName()).copy().withStyle(ChatFormatting.WHITE) : Component.literal("Server").withStyle(ChatFormatting.WHITE),
+                                new ItemStack(key).getDisplayName(),
+                                new ItemStack(value).getDisplayName())
+                        .withStyle(ChatFormatting.GRAY), false);
+            }
             setDirty();
         }
         return entityDrops.get(key);
     }
 
-    public Item getRandomizedItemForRecipe(Item key, ServerLevel serverLevel, boolean computeIfAbsent) {
+    public Item getRandomizedItemForRecipe(Item key, ServerPlayer player, ServerLevel level, boolean computeIfAbsent) {
         if(!craftingResult.containsKey(key) && computeIfAbsent) {
-            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(serverLevel.enabledFeatures())).filter(item -> !craftingResult.containsValue(item)).toList();
-            craftingResult.put(key, list.get(RandomSource.create().nextInt(list.size())));
+            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(level.enabledFeatures())).filter(item -> !craftingResult.containsValue(item)).toList();
+            Item value = list.get(RandomSource.create().nextInt(list.size()));
+            craftingResult.put(key, value);
+            int rarityInt = toInt(value.components().get(DataComponents.RARITY));
+            if(level.getGameRules().getInt(ModGameRules.DISCOVERY_ANNOUNCEMENT_RARITY_LEVEL) <= rarityInt) {
+                if(requestedSound < rarityInt) requestedSound = rarityInt;
+                level.getServer().getPlayerList().broadcastSystemMessage(Component.translatable(
+                                "message.discovered.craft",
+                                player != null ? Objects.requireNonNull(player.getDisplayName()).copy().withStyle(ChatFormatting.WHITE) : Component.literal("Server").withStyle(ChatFormatting.WHITE),
+                                new ItemStack(key).getDisplayName(),
+                                new ItemStack(value).getDisplayName())
+                        .withStyle(ChatFormatting.GRAY), false);
+            }
             setDirty();
         }
         return craftingResult.get(key);
     }
 
-    public Item getStaticRandomizedItemForLoot(Item key, ServerLevel serverLevel, boolean computeIfAbsent) {
+    public Item getStaticRandomizedItemForLoot(Item key, ServerPlayer player, ServerLevel level, boolean computeIfAbsent) {
         if(!chestLoot.containsKey(key) && computeIfAbsent) {
-            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(serverLevel.enabledFeatures())).filter(item -> !chestLoot.containsValue(item)).toList();
-            chestLoot.put(key, list.get(RandomSource.create().nextInt(list.size())));
+            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(level.enabledFeatures())).filter(item -> !chestLoot.containsValue(item)).toList();
+            Item value = list.get(RandomSource.create().nextInt(list.size()));
+            chestLoot.put(key, value);
+            int rarityInt = toInt(value.components().get(DataComponents.RARITY));
+            if(level.getGameRules().getInt(ModGameRules.DISCOVERY_ANNOUNCEMENT_RARITY_LEVEL) <= rarityInt) {
+                if(requestedSound < rarityInt) requestedSound = rarityInt;
+                level.getServer().getPlayerList().broadcastSystemMessage(Component.translatable(
+                        "message.discovered.loot",
+                                player != null ? Objects.requireNonNull(player.getDisplayName()).copy().withStyle(ChatFormatting.WHITE) : Component.literal("Server").withStyle(ChatFormatting.WHITE),
+                                new ItemStack(key).getDisplayName(),
+                                new ItemStack(value).getDisplayName())
+                        .withStyle(ChatFormatting.GRAY), false);
+            }
             setDirty();
         }
         return chestLoot.get(key);
     }
 
-    public Item getUniqueRandomizedItemForLoot(ServerLevel serverLevel) {
-        List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(serverLevel.enabledFeatures())).toList();
+    public Item getUniqueRandomizedItemForLoot(ServerLevel level) {
+        List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(level.enabledFeatures())).toList();
         return list.get(RandomSource.create().nextInt(list.size()));
+    }
+
+    private static int toInt(Rarity rarity) {
+        return switch (rarity) {
+            case COMMON -> 0;
+            case UNCOMMON -> 1;
+            case RARE -> 2;
+            case EPIC -> 3;
+            case null -> 0;
+        };
     }
 
     public Item blockDropsSource(Item item) {

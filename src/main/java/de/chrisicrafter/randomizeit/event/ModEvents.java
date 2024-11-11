@@ -38,11 +38,7 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onTickPre(ServerTickEvent.Pre event) {
-        RandomizerData.getInstance(event.getServer().overworld(), null).doTick(event.getServer().overworld());
-        for(ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
-            RandomizerAttachment cap = player.getData(ModAttachments.RANDOMIZER_ATTACHMENT);
-            cap.doTick(event.getServer().overworld());
-        }
+        RandomizerData.doTick();
     }
 
     @SubscribeEvent

@@ -73,6 +73,6 @@ public abstract class BlockMixin extends BlockBehaviour implements ItemLike, IBl
 
     @Unique
     private static List<ItemStack> randomizeIt$getDrops(List<ItemStack> items, @Nullable ServerPlayer player, ServerLevel level) {
-        return items.stream().map(stack -> new ItemStack(RandomizerData.getInstance(level, player).getRandomizedItemForBlock(stack.getItem(), level, true), stack.getCount())).toList();
+        return items.stream().map(stack -> new ItemStack(RandomizerData.getInstance(level, player).getRandomizedItemForBlock(stack.getItem(), player, level, true), stack.getCount())).toList();
     }
 }

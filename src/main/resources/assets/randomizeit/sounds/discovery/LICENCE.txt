@@ -1,0 +1,7 @@
+Soundfiles "task_completed" (uncommon.ogg) and "goal_completed" (rare.ogg) from "Anthony Hilyard"
+
+Licence: Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License (https://creativecommons.org/licenses/by-nc-nd/4.0/)
+
+Original files: https://github.com/AHilyard/AdvancementPlaques/tree/1.21-multi/common/src/main/resources/assets/advancementplaques/sounds/ui/toast
+
+Original Licence: https://github.com/AHilyard/AdvancementPlaques/blob/1.21-multi/LICENSE

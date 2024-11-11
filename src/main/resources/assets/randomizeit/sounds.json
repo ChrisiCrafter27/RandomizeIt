@@ -1,0 +1,18 @@
+{
+  "discovery.uncommon": {
+    "sounds": [
+      {
+        "name": "randomizeit:discovery/uncommon",
+        "volume": 0.6
+      }
+    ]
+  },
+  "discovery.rare": {
+    "sounds": [
+      {
+        "name": "randomizeit:discovery/rare",
+        "volume": 0.6
+      }
+    ]
+  }
+}

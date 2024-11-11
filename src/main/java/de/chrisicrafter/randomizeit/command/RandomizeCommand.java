@@ -30,7 +30,8 @@ public class RandomizeCommand {
         return LiteralArgumentBuilder.<CommandSourceStack>literal("randomize")
                 .requires(context -> context.hasPermission(/*cheat level*/ 2))
                 .then(Commands.literal("reset")
-                        .requires(CommandSourceStack::isPlayer)
+                        .then(Commands.literal("*")
+                                .executes(RandomizeCommand::resetAll))
                         .then(Commands.literal("players")
                                 .then(Commands.argument("players", EntityArgument.players())
                                         .then(Commands.literal("*")
@@ -39,7 +40,7 @@ public class RandomizeCommand {
                                                 .executes(context -> reset(context, context.getArgument("type", Type.class), EntityArgument.getPlayers(context, "players"), true)))))
                         .then(Commands.literal("server")
                                 .then(Commands.literal("*")
-                                        .executes(RandomizeCommand::reset))
+                                        .executes(RandomizeCommand::resetServer))
                                 .then(Commands.argument("type", EnumArgument.enumArgument(Type.class))
                                         .executes(context -> reset(context, context.getArgument("type", Type.class), true)))))
                 .then(Commands.literal("get")
@@ -74,7 +75,22 @@ public class RandomizeCommand {
                                                                 .executes(context -> set(context, ResourceLocationArgument.getId(context, "key"), ResourceLocationArgument.getId(context, "value"), context.getArgument("type", Type.class), true))))))));
     }
 
-    private static int reset(CommandContext<CommandSourceStack> context) {
+    private static int resetAll(CommandContext<CommandSourceStack> context) {
+        reset(context, Type.blockDrops, false);
+        reset(context, Type.mobDrops, false);
+        reset(context, Type.craftingResults, false);
+        reset(context, Type.chestLoots, false);
+        for(ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
+            reset(context, Type.blockDrops, List.of(player), false);
+            reset(context, Type.mobDrops, List.of(player), false);
+            reset(context, Type.craftingResults, List.of(player), false);
+            reset(context, Type.chestLoots, List.of(player), false);
+        }
+        context.getSource().sendSuccess(() -> Component.translatable("commands.randomizeit.randomize.reset.all.server"), true);
+        return 1;
+    }
+
+    private static int resetServer(CommandContext<CommandSourceStack> context) {
         reset(context, Type.blockDrops, false);
         reset(context, Type.mobDrops, false);
         reset(context, Type.craftingResults, false);
@@ -140,10 +156,10 @@ public class RandomizeCommand {
             case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel(), player).chestLootSource(key);
         };
         Item value2 = switch (type) {
-            case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForBlock(key, context.getSource().getLevel(), false);
-            case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForMob(key, context.getSource().getLevel(), false);
-            case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForRecipe(key, context.getSource().getLevel(), false);
-            case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel(), player).getStaticRandomizedItemForLoot(key, context.getSource().getLevel(), false);
+            case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForBlock(key, null, context.getSource().getLevel(), false);
+            case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForMob(key, null, context.getSource().getLevel(), false);
+            case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForRecipe(key, null, context.getSource().getLevel(), false);
+            case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel(), player).getStaticRandomizedItemForLoot(key, null, context.getSource().getLevel(), false);
         };
         context.getSource().sendSuccess(() -> Component.translatable(
                 "commands.randomizeit.randomize.get.success",
@@ -165,10 +181,10 @@ public class RandomizeCommand {
             throw new SimpleCommandExceptionType(Component.literal("Not an item: " + id2.toString())).create();
         }
         Item previous = switch (type) {
-            case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel(), null).getRandomizedItemForBlock(key, context.getSource().getLevel(), false);
-            case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel(), null).getRandomizedItemForMob(key, context.getSource().getLevel(), false);
-            case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel(), null).getRandomizedItemForRecipe(key, context.getSource().getLevel(), false);
-            case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel(), null).getStaticRandomizedItemForLoot(key, context.getSource().getLevel(), false);
+            case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel(), null).getRandomizedItemForBlock(key, null, context.getSource().getLevel(), false);
+            case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel(), null).getRandomizedItemForMob(key, null, context.getSource().getLevel(), false);
+            case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel(), null).getRandomizedItemForRecipe(key, null, context.getSource().getLevel(), false);
+            case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel(), null).getStaticRandomizedItemForLoot(key, null, context.getSource().getLevel(), false);
         };
         if(previous != null && !replace) {
             context.getSource().sendFailure(Component.translatable(
@@ -204,10 +220,10 @@ public class RandomizeCommand {
         int count = 0;
         for(ServerPlayer player : players) {
             Item previous = switch (type) {
-                case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForBlock(key, context.getSource().getLevel(), false);
-                case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForMob(key, context.getSource().getLevel(), false);
-                case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForRecipe(key, context.getSource().getLevel(), false);
-                case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel(), player).getStaticRandomizedItemForLoot(key, context.getSource().getLevel(), false);
+                case blockDrops -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForBlock(key, null, context.getSource().getLevel(), false);
+                case mobDrops -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForMob(key, null, context.getSource().getLevel(), false);
+                case craftingResults -> RandomizerData.getInstance(context.getSource().getLevel(), player).getRandomizedItemForRecipe(key, null, context.getSource().getLevel(), false);
+                case chestLoots -> RandomizerData.getInstance(context.getSource().getLevel(), player).getStaticRandomizedItemForLoot(key, null, context.getSource().getLevel(), false);
             };
             if(previous != null && !replace) {
                 context.getSource().sendFailure(Component.translatable(

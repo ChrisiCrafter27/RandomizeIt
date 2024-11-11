@@ -43,9 +43,8 @@ public class ModGameRules {
     public static final GameRules.Key<GameRules.BooleanValue> STATIC_CHEST_LOOT = register("staticChestLoot", GameRules.Category.DROPS, GameRules.BooleanValue.create(false));
 
     //Others
-    public static final GameRules.Key<GameRules.IntegerValue> RANDOM_RANDOMIZER_TOGGLE_INTERVAL = register("randomRandomizerToggleInterval", GameRules.Category.UPDATES, GameRules.IntegerValue.create(0,
-            ((server, value) -> {if(value.get() < 0) server.getGameRules().getRule(ModGameRules.RANDOM_RANDOMIZER_TOGGLE_INTERVAL).set(0, server);})));
     public static final GameRules.Key<GameRules.BooleanValue> ANNOUNCE_RANDOMIZER_TOGGLES = register("announceRandomizerToggle", GameRules.Category.UPDATES, GameRules.BooleanValue.create(true));
+    public static final GameRules.Key<GameRules.IntegerValue> DISCOVERY_ANNOUNCEMENT_RARITY_LEVEL = register("discoveryAnnouncementRarityLevel", GameRules.Category.UPDATES, GameRules.IntegerValue.create(2));
     public static final GameRules.Key<GameRules.BooleanValue> PLAYER_UNIQUE_DATA = register("playerUniqueData", GameRules.Category.DROPS, GameRules.BooleanValue.create(true,
             ((server, value) -> {
                 if(value.get()) {

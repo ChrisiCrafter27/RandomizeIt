@@ -10,11 +10,11 @@ import java.util.HashMap;
 
 public class RandomizerAttachment extends RandomizerData implements INBTSerializable<CompoundTag> {
     public RandomizerAttachment() {
-        this(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), 0);
+        this(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
     }
 
-    public RandomizerAttachment(HashMap<Item, Item> blockDrops, HashMap<Item, Item> entityDrops, HashMap<Item, Item> craftingResult, HashMap<Item, Item> chestLoot, int time) {
-        super(blockDrops, entityDrops, craftingResult, chestLoot, time);
+    public RandomizerAttachment(HashMap<Item, Item> blockDrops, HashMap<Item, Item> entityDrops, HashMap<Item, Item> craftingResult, HashMap<Item, Item> chestLoot) {
+        super(blockDrops, entityDrops, craftingResult, chestLoot);
     }
 
     @Override

@@ -9,10 +9,14 @@
     "BlockMixin",
     "CraftingMenuMixin",
     "InventoryMenuMixin",
+    "ItemStackMixin",
     "LivingEntityMixin",
     "RandomizableContainerBlockEntityMixin"
   ],
   "client": [
+    "client.ChatComponentMixin",
+    "client.ItemBlockRendererTypesMixin",
+    "client.ItemRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

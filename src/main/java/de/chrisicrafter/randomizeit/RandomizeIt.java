@@ -5,6 +5,7 @@ import de.chrisicrafter.randomizeit.data.ModAttachments;
 import de.chrisicrafter.randomizeit.command.RandomizeCommand;
 import de.chrisicrafter.randomizeit.data.RandomizerData;
 import de.chrisicrafter.randomizeit.gamerule.ModGameRules;
+import de.chrisicrafter.randomizeit.networking.PlayUiSoundS2CPayload;
 import de.chrisicrafter.randomizeit.networking.UpdateGameruleS2CPayload;
 import de.chrisicrafter.randomizeit.networking.UpdateRandomizerDataPayload;
 import net.neoforged.bus.api.IEventBus;
@@ -49,6 +50,10 @@ public class RandomizeIt {
                         UpdateGameruleS2CPayload.TYPE,
                         UpdateGameruleS2CPayload.CODEC,
                         UpdateGameruleS2CPayload::handle)
+                .playToClient(
+                        PlayUiSoundS2CPayload.TYPE,
+                        PlayUiSoundS2CPayload.CODEC,
+                        PlayUiSoundS2CPayload::handle)
                 .optional();
     }
 
