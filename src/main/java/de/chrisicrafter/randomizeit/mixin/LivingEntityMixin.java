@@ -31,20 +31,20 @@ public abstract class LivingEntityMixin extends Entity {
     @Shadow protected int lastHurtByPlayerTime;
 
     @Shadow protected abstract boolean shouldDropLoot();
-    @Shadow protected abstract void dropFromLootTable(ServerLevel level, DamageSource damageSource, boolean playerKill);
+    @Shadow protected abstract void dropFromLootTable(DamageSource damageSource, boolean playerKill);
     @Shadow protected abstract void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean playerKill);
-    @Shadow protected abstract void dropEquipment(ServerLevel level);
-    @Shadow protected abstract void dropExperience(ServerLevel level, Entity entity);
+    @Shadow protected abstract void dropEquipment();
+    @Shadow protected abstract void dropExperience(Entity entity);
 
     @Inject(method = "dropAllDeathLoot", at = @At("HEAD"), cancellable = true)
     public void dropAllDeathLoot(ServerLevel level, DamageSource damageSource, CallbackInfo info) {
         if(level.getGameRules().getBoolean(ModGameRules.RANDOM_MOB_DROPS)) {
-            this.dropExperience(level, damageSource.getEntity());
+            this.dropExperience(damageSource.getEntity());
 
             this.captureDrops(new ArrayList<>());
             boolean flag = this.lastHurtByPlayerTime > 0;
             if (this.shouldDropLoot() && level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
-                this.dropFromLootTable(level, damageSource, flag);
+                this.dropFromLootTable(damageSource, flag);
                 this.dropCustomDeathLoot(level, damageSource, flag);
             }
             Collection<ItemEntity> drops = captureDrops();
@@ -62,7 +62,7 @@ public abstract class LivingEntityMixin extends Entity {
             }
 
             this.captureDrops(new ArrayList<>());
-            this.dropEquipment(level);
+            this.dropEquipment();
             Collection<ItemEntity> equipment = captureDrops();
             assert equipment != null;
             if (!CommonHooks.onLivingDrops((LivingEntity) (Object) this, damageSource, drops, lastHurtByPlayerTime > 0)) {

@@ -145,7 +145,7 @@ public class RandomizeCommand {
     }
 
     private static int get(CommandContext<CommandSourceStack> context, ServerPlayer player, ResourceLocation id, Type type) throws CommandSyntaxException {
-        Item key = BuiltInRegistries.ITEM.getValue(id);
+        Item key = BuiltInRegistries.ITEM.get(id);
         if(key == Items.AIR) {
             throw new SimpleCommandExceptionType(Component.literal("Not an item: " + id.toString())).create();
         }
@@ -172,11 +172,11 @@ public class RandomizeCommand {
     }
 
     private static int set(CommandContext<CommandSourceStack> context, ResourceLocation id1, ResourceLocation id2, Type type, boolean replace) throws CommandSyntaxException {
-        Item key = BuiltInRegistries.ITEM.getValue(id1);
+        Item key = BuiltInRegistries.ITEM.get(id1);
         if(key == Items.AIR) {
             throw new SimpleCommandExceptionType(Component.literal("Not an item: " + id1.toString())).create();
         }
-        Item value = BuiltInRegistries.ITEM.getValue(id2);
+        Item value = BuiltInRegistries.ITEM.get(id2);
         if(value == Items.AIR) {
             throw new SimpleCommandExceptionType(Component.literal("Not an item: " + id2.toString())).create();
         }
@@ -209,11 +209,11 @@ public class RandomizeCommand {
     }
 
     private static int set(CommandContext<CommandSourceStack> context, Collection<ServerPlayer> players, ResourceLocation id1, ResourceLocation id2, Type type, boolean replace) throws CommandSyntaxException {
-        Item key = BuiltInRegistries.ITEM.getValue(id1);
+        Item key = BuiltInRegistries.ITEM.get(id1);
         if(key == Items.AIR) {
             throw new SimpleCommandExceptionType(Component.literal("Not an item: " + id1.toString())).create();
         }
-        Item value = BuiltInRegistries.ITEM.getValue(id2);
+        Item value = BuiltInRegistries.ITEM.get(id2);
         if(value == Items.AIR) {
             throw new SimpleCommandExceptionType(Component.literal("Not an item: " + id2.toString())).create();
         }

@@ -15,8 +15,8 @@ import static net.minecraft.client.renderer.ItemBlockRenderTypes.getChunkRenderT
 
 @Mixin(ItemBlockRenderTypes.class)
 public abstract class ItemBlockRendererTypesMixin {
-    @Inject(method = "getRenderType(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/RenderType;", at = @At("HEAD"), cancellable = true)
-    private static void overrideRenderType(BlockState state, CallbackInfoReturnable<RenderType> cir) {
+    @Inject(method = "getRenderType(Lnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/client/renderer/RenderType;", at = @At("HEAD"), cancellable = true)
+    private static void overrideRenderType(BlockState state, boolean isGlas, CallbackInfoReturnable<RenderType> cir) {
         if (ChatItemRenderer.alphaValue != 1.0F) {
             if (!Minecraft.useShaderTransparency()) {
                 cir.setReturnValue(Sheets.cutoutBlockSheet());

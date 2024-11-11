@@ -119,28 +119,28 @@ public class RandomizerData extends SavedData {
 
         int size1 = tag.getInt("block_drops");
         for(int i = 0; i < size1; i++) {
-            blockDrops.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("block_drop_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("block_drop_v" + i))));
+            blockDrops.put(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(tag.getString("block_drop_k" + i))), BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(tag.getString("block_drop_v" + i))));
         }
 
         HashMap<Item, Item> entityDrops = new HashMap<>();
 
         int size2 = tag.getInt("entity_drops");
         for(int i = 0; i < size2; i++) {
-            entityDrops.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("entity_drop_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("entity_drop_v" + i))));
+            entityDrops.put(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(tag.getString("entity_drop_k" + i))), BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(tag.getString("entity_drop_v" + i))));
         }
 
         HashMap<Item, Item> craftingResult = new HashMap<>();
 
         int size3 = tag.getInt("crafting_results");
         for(int i = 0; i < size3; i++) {
-            craftingResult.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("crafting_result_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("crafting_result_v" + i))));
+            craftingResult.put(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(tag.getString("crafting_result_k" + i))), BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(tag.getString("crafting_result_v" + i))));
         }
 
         HashMap<Item, Item> chestLoots = new HashMap<>();
 
         int size4 = tag.getInt("chest_loots");
         for(int i = 0; i < size4; i++) {
-            chestLoots.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_v" + i))));
+            chestLoots.put(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(tag.getString("chest_loot_k" + i))), BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(tag.getString("chest_loot_v" + i))));
         }
 
         return new RandomizerData(blockDrops, entityDrops, craftingResult, chestLoots);

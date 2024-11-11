@@ -34,11 +34,11 @@ public abstract class AbstractMinecartContainerMixin extends AbstractMinecart im
 
     @Shadow public abstract @NotNull ItemStack getItem(int p_38218_);
 
-    @Shadow public abstract long getContainerLootTableSeed();
+    @Shadow public abstract long getLootTableSeed();
 
-    @Shadow @Nullable public abstract ResourceKey<LootTable> getContainerLootTable();
+    @Shadow @Nullable public abstract ResourceKey<LootTable> getLootTable();
 
-    @Shadow public abstract void setContainerLootTable(@org.jetbrains.annotations.Nullable ResourceKey<LootTable> p_331410_);
+    @Shadow public abstract void setLootTable(@org.jetbrains.annotations.Nullable ResourceKey<LootTable> p_331410_);
 
     protected AbstractMinecartContainerMixin(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -47,13 +47,13 @@ public abstract class AbstractMinecartContainerMixin extends AbstractMinecart im
     @Override
     public void unpackChestVehicleLootTable(Player player) {
         MinecraftServer minecraftserver = this.level().getServer();
-        if (this.getContainerLootTable() != null && minecraftserver != null) {
-            LootTable loottable = minecraftserver.reloadableRegistries().getLootTable(this.getContainerLootTable());
+        if (this.getLootTable() != null && minecraftserver != null) {
+            LootTable loottable = minecraftserver.reloadableRegistries().getLootTable(this.getLootTable());
             if (player != null) {
-                CriteriaTriggers.GENERATE_LOOT.trigger((ServerPlayer)player, this.getContainerLootTable());
+                CriteriaTriggers.GENERATE_LOOT.trigger((ServerPlayer)player, this.getLootTable());
             }
 
-            this.setContainerLootTable(null);
+            this.setLootTable(null);
             LootParams.Builder lootparams$builder = (new LootParams.Builder((ServerLevel)this.level())).withParameter(LootContextParams.ORIGIN, this.position());
 
             lootparams$builder.withParameter(LootContextParams.ATTACKING_ENTITY, (AbstractMinecartContainer) (Object) this);
@@ -61,7 +61,7 @@ public abstract class AbstractMinecartContainerMixin extends AbstractMinecart im
                 lootparams$builder.withLuck(player.getLuck()).withParameter(LootContextParams.THIS_ENTITY, player);
             }
 
-            loottable.fill(this, lootparams$builder.create(LootContextParamSets.CHEST), this.getContainerLootTableSeed());
+            loottable.fill(this, lootparams$builder.create(LootContextParamSets.CHEST), this.getLootTableSeed());
 
             if (minecraftserver.getGameRules().getBoolean(ModGameRules.RANDOM_CHEST_LOOT)) {
                 for(int i = 0; i < getContainerSize(); i++) {
