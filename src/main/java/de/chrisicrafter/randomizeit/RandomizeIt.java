@@ -1,18 +1,21 @@
 package de.chrisicrafter.randomizeit;
 
 import com.mojang.logging.LogUtils;
+import de.chrisicrafter.randomizeit.data.ModAttachments;
 import de.chrisicrafter.randomizeit.command.RandomizeCommand;
 import de.chrisicrafter.randomizeit.data.RandomizerData;
 import de.chrisicrafter.randomizeit.gamerule.ModGameRules;
-import de.chrisicrafter.randomizeit.networking.ModMessages;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import de.chrisicrafter.randomizeit.networking.UpdateGameruleS2CPayload;
+import de.chrisicrafter.randomizeit.networking.UpdateRandomizerDataPayload;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import org.slf4j.Logger;
 
 @Mod(RandomizeIt.MOD_ID)
@@ -21,17 +24,32 @@ public class RandomizeIt {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public RandomizeIt() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        IEventBus modEventBus = ModLoadingContext.get().getActiveContainer().getEventBus();
+        assert modEventBus != null;
         modEventBus.addListener(this::commonSetup);
-        MinecraftForge.EVENT_BUS.register(this);
+        modEventBus.addListener(this::registerPayloadHandlers);
+        ModAttachments.register(modEventBus);
+        NeoForge.EVENT_BUS.register(this);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             LOGGER.info("COMMON SETUP");
-            ModMessages.register();
             ModGameRules.register();
         });
+    }
+
+    private void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
+        event.registrar("1")
+                .playToClient(
+                        UpdateRandomizerDataPayload.TYPE,
+                        UpdateRandomizerDataPayload.CODEC,
+                        UpdateRandomizerDataPayload::handle)
+                .playToClient(
+                        UpdateGameruleS2CPayload.TYPE,
+                        UpdateGameruleS2CPayload.CODEC,
+                        UpdateGameruleS2CPayload::handle)
+                .optional();
     }
 
     @SubscribeEvent

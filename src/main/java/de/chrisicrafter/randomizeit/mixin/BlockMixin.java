@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.extensions.IForgeBlock;
+import net.neoforged.neoforge.common.extensions.IBlockExtension;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 @Mixin(Block.class)
-public abstract class BlockMixin extends BlockBehaviour implements ItemLike, IForgeBlock {
+public abstract class BlockMixin extends BlockBehaviour implements ItemLike, IBlockExtension {
     public BlockMixin(Properties properties) {
         super(properties);
     }
@@ -73,6 +73,6 @@ public abstract class BlockMixin extends BlockBehaviour implements ItemLike, IFo
 
     @Unique
     private static List<ItemStack> randomizeIt$getDrops(List<ItemStack> items, @Nullable ServerPlayer player, ServerLevel level) {
-        return items.stream().map(stack -> new ItemStack(RandomizerData.getInstance(level, player).getRandomizedItemForBlock(stack.getItem(), true), stack.getCount())).toList();
+        return items.stream().map(stack -> new ItemStack(RandomizerData.getInstance(level, player).getRandomizedItemForBlock(stack.getItem(), level, true), stack.getCount())).toList();
     }
 }

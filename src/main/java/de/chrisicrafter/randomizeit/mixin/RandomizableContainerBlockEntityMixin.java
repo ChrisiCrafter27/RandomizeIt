@@ -6,7 +6,6 @@ import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.RandomizableContainer;
@@ -62,23 +61,23 @@ public abstract class RandomizableContainerBlockEntityMixin extends BaseContaine
                 }
 
                 loottable.fill(this, lootparams$builder.create(LootContextParamSets.CHEST), this.getLootTableSeed());
-            }
 
-            NonNullList<ItemStack> items = getItems();
-            items.replaceAll(item -> {
-                if(item.is(Items.AIR) || item.getCount() == 0) return item;
-                return new ItemStack(randomizeIt$getRandomizedItem((ServerLevel) this.level, player, item.getItem()), item.getCount());
-            });
-            setItems(items);
+                NonNullList<ItemStack> items = getItems();
+                items.replaceAll(item -> {
+                    if(item.is(Items.AIR) || item.getCount() == 0) return item;
+                    return new ItemStack(randomizeIt$getRandomizedItem((ServerLevel) this.level, player, item.getItem()), item.getCount());
+                });
+                setItems(items);
+            }
         } else RandomizableContainer.super.unpackLootTable(player);
     }
 
     @Unique
     private Item randomizeIt$getRandomizedItem(ServerLevel level, Player player, Item item) {
         if(level.getGameRules().getBoolean(ModGameRules.STATIC_CHEST_LOOT)) {
-            return RandomizerData.getInstance(level, player).getStaticRandomizedItemForLoot(item, true);
+            return RandomizerData.getInstance(level, player).getStaticRandomizedItemForLoot(item, level, true);
         } else {
-            if(!randomizeIt$map.containsKey(item)) randomizeIt$map.put(item, RandomizerData.getInstance(level, player).getUniqueRandomizedItemForLoot());
+            if(!randomizeIt$map.containsKey(item)) randomizeIt$map.put(item, RandomizerData.getInstance(level, player).getUniqueRandomizedItemForLoot(level));
             return randomizeIt$map.get(item);
         }
     }

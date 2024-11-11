@@ -3,6 +3,7 @@ package de.chrisicrafter.randomizeit.data;
 import de.chrisicrafter.randomizeit.gamerule.ModGameRules;
 import de.chrisicrafter.randomizeit.utils.MapUtils;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -11,11 +12,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.GameMasterBlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -48,7 +48,7 @@ public class RandomizerData extends SavedData {
     }
 
     @Override
-    public @NotNull CompoundTag save(CompoundTag tag, HolderLookup.@NotNull Provider provider) {
+    public @NotNull CompoundTag save(@NotNull CompoundTag tag, HolderLookup.@NotNull Provider provider) {
         return save(tag);
     }
 
@@ -58,8 +58,8 @@ public class RandomizerData extends SavedData {
 
         int i1 = 0;
         for(Map.Entry<Item, Item> entry : blockDrops.entrySet()) {
-            tag.putString("block_drop_k" + i1, ForgeRegistries.ITEMS.getKey(entry.getKey()).toString());
-            tag.putString("block_drop_v" + i1, ForgeRegistries.ITEMS.getKey(entry.getValue()).toString());
+            tag.putString("block_drop_k" + i1, BuiltInRegistries.ITEM.getKey(entry.getKey()).toString());
+            tag.putString("block_drop_v" + i1, BuiltInRegistries.ITEM.getKey(entry.getValue()).toString());
             i1++;
         }
 
@@ -68,8 +68,8 @@ public class RandomizerData extends SavedData {
 
         int i2 = 0;
         for(Map.Entry<Item, Item> entry : entityDrops.entrySet()) {
-            tag.putString("entity_drop_k" + i2, ForgeRegistries.ITEMS.getKey(entry.getKey()).toString());
-            tag.putString("entity_drop_v" + i2, ForgeRegistries.ITEMS.getKey(entry.getValue()).toString());
+            tag.putString("entity_drop_k" + i2, BuiltInRegistries.ITEM.getKey(entry.getKey()).toString());
+            tag.putString("entity_drop_v" + i2, BuiltInRegistries.ITEM.getKey(entry.getValue()).toString());
             i2++;
         }
 
@@ -78,8 +78,8 @@ public class RandomizerData extends SavedData {
 
         int i3 = 0;
         for(Map.Entry<Item, Item> entry : craftingResult.entrySet()) {
-            tag.putString("crafting_result_k" + i3, ForgeRegistries.ITEMS.getKey(entry.getKey()).toString());
-            tag.putString("crafting_result_v" + i3, ForgeRegistries.ITEMS.getKey(entry.getValue()).toString());
+            tag.putString("crafting_result_k" + i3, BuiltInRegistries.ITEM.getKey(entry.getKey()).toString());
+            tag.putString("crafting_result_v" + i3, BuiltInRegistries.ITEM.getKey(entry.getValue()).toString());
             i3++;
         }
 
@@ -88,8 +88,8 @@ public class RandomizerData extends SavedData {
 
         int i4 = 0;
         for(Map.Entry<Item, Item> entry : chestLoot.entrySet()) {
-            tag.putString("chest_loot_k" + i4, ForgeRegistries.ITEMS.getKey(entry.getKey()).toString());
-            tag.putString("chest_loot_v" + i4, ForgeRegistries.ITEMS.getKey(entry.getValue()).toString());
+            tag.putString("chest_loot_k" + i4, BuiltInRegistries.ITEM.getKey(entry.getKey()).toString());
+            tag.putString("chest_loot_v" + i4, BuiltInRegistries.ITEM.getKey(entry.getValue()).toString());
             i4++;
         }
 
@@ -107,28 +107,28 @@ public class RandomizerData extends SavedData {
 
         int size1 = tag.getInt("block_drops");
         for(int i = 0; i < size1; i++) {
-            blockDrops.put(ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("block_drop_k" + i))), ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("block_drop_v" + i))));
+            blockDrops.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("block_drop_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("block_drop_v" + i))));
         }
 
         HashMap<Item, Item> entityDrops = new HashMap<>();
 
         int size2 = tag.getInt("entity_drops");
         for(int i = 0; i < size2; i++) {
-            entityDrops.put(ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("entity_drop_k" + i))), ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("entity_drop_v" + i))));
+            entityDrops.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("entity_drop_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("entity_drop_v" + i))));
         }
 
         HashMap<Item, Item> craftingResult = new HashMap<>();
 
         int size3 = tag.getInt("crafting_results");
         for(int i = 0; i < size3; i++) {
-            craftingResult.put(ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("crafting_result_k" + i))), ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("crafting_result_v" + i))));
+            craftingResult.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("crafting_result_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("crafting_result_v" + i))));
         }
 
         HashMap<Item, Item> chestLoots = new HashMap<>();
 
         int size4 = tag.getInt("chest_loots");
         for(int i = 0; i < size4; i++) {
-            chestLoots.put(ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_k" + i))), ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_v" + i))));
+            chestLoots.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_v" + i))));
         }
 
         int time = tag.getInt("time");
@@ -156,8 +156,7 @@ public class RandomizerData extends SavedData {
     public static RandomizerData getInstance(ServerLevel level, Entity entity) {
         if(instance == null) instance = level.getServer().overworld().getDataStorage().computeIfAbsent(RandomizerData.factory(), "randomizer_data");
         if(level.getGameRules().getBoolean(ModGameRules.PLAYER_UNIQUE_DATA) && entity instanceof ServerPlayer player) {
-            LazyOptional<RandomizerCapability> optional = player.getCapability(RandomizerCapability.CAPABILITY);
-            return optional.<RandomizerData>cast().orElse(instance);
+            return player.getData(ModAttachments.RANDOMIZER_ATTACHMENT);
         }
         return instance;
     }
@@ -181,44 +180,44 @@ public class RandomizerData extends SavedData {
         }
     }
 
-    public Item getRandomizedItemForBlock(Item key, boolean computeIfAbsent) {
+    public Item getRandomizedItemForBlock(Item key, ServerLevel serverLevel, boolean computeIfAbsent) {
         if(!blockDrops.containsKey(key) && computeIfAbsent) {
-            List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(block -> !blockDrops.containsValue(block)).toList();
+            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(serverLevel.enabledFeatures())).filter(item -> !blockDrops.containsValue(item)).toList();
             blockDrops.put(key, list.get(RandomSource.create().nextInt(list.size())));
             setDirty();
         }
         return blockDrops.get(key);
     }
 
-    public Item getRandomizedItemForMob(Item key, boolean computeIfAbsent) {
+    public Item getRandomizedItemForMob(Item key, ServerLevel serverLevel, boolean computeIfAbsent) {
         if(!entityDrops.containsKey(key) && computeIfAbsent) {
-            List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(entity -> !entityDrops.containsValue(entity)).toList();
+            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(serverLevel.enabledFeatures())).filter(item -> !entityDrops.containsValue(item)).toList();
             entityDrops.put(key, list.get(RandomSource.create().nextInt(list.size())));
             setDirty();
         }
         return entityDrops.get(key);
     }
 
-    public Item getRandomizedItemForRecipe(Item key, boolean computeIfAbsent) {
+    public Item getRandomizedItemForRecipe(Item key, ServerLevel serverLevel, boolean computeIfAbsent) {
         if(!craftingResult.containsKey(key) && computeIfAbsent) {
-            List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(entity -> !craftingResult.containsValue(entity)).toList();
+            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(serverLevel.enabledFeatures())).filter(item -> !craftingResult.containsValue(item)).toList();
             craftingResult.put(key, list.get(RandomSource.create().nextInt(list.size())));
             setDirty();
         }
         return craftingResult.get(key);
     }
 
-    public Item getStaticRandomizedItemForLoot(Item key, boolean computeIfAbsent) {
+    public Item getStaticRandomizedItemForLoot(Item key, ServerLevel serverLevel, boolean computeIfAbsent) {
         if(!chestLoot.containsKey(key) && computeIfAbsent) {
-            List<Item> list = ForgeRegistries.ITEMS.getValues().stream().filter(entity -> !chestLoot.containsValue(entity)).toList();
+            List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(serverLevel.enabledFeatures())).filter(item -> !chestLoot.containsValue(item)).toList();
             chestLoot.put(key, list.get(RandomSource.create().nextInt(list.size())));
             setDirty();
         }
         return chestLoot.get(key);
     }
 
-    public Item getUniqueRandomizedItemForLoot() {
-        List<Item> list = ForgeRegistries.ITEMS.getValues().stream().toList();
+    public Item getUniqueRandomizedItemForLoot(ServerLevel serverLevel) {
+        List<Item> list = BuiltInRegistries.ITEM.stream().filter(item -> !(item instanceof GameMasterBlockItem)).filter(item -> item.isEnabled(serverLevel.enabledFeatures())).toList();
         return list.get(RandomSource.create().nextInt(list.size()));
     }
 

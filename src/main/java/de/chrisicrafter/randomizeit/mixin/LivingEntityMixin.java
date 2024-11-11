@@ -12,8 +12,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.event.ForgeEventFactory;
+import net.neoforged.neoforge.common.CommonHooks;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -49,10 +48,11 @@ public abstract class LivingEntityMixin extends Entity {
                 this.dropCustomDeathLoot(level, damageSource, flag);
             }
             Collection<ItemEntity> drops = captureDrops();
-            if (!ForgeEventFactory.onLivingDrops((LivingEntity) (Object) this, damageSource, drops, lastHurtByPlayerTime > 0)) {
+            assert drops != null;
+            if (!CommonHooks.onLivingDrops((LivingEntity) (Object) this, damageSource, drops, lastHurtByPlayerTime > 0)) {
                 drops.forEach(e -> {
                     if(!level.getGameRules().getBoolean(ModGameRules.PLAYER_UNIQUE_DATA) || damageSource.getEntity() instanceof Player) {
-                        e.setItem(new ItemStack(RandomizerData.getInstance(level.getServer().overworld(), damageSource.getEntity()).getRandomizedItemForMob(e.getItem().getItem(), true), e.getItem().getCount()));
+                        e.setItem(new ItemStack(RandomizerData.getInstance(level.getServer().overworld(), damageSource.getEntity()).getRandomizedItemForMob(e.getItem().getItem(), level, true), e.getItem().getCount()));
                         level.addFreshEntity(e);
                     }
                 });
@@ -61,7 +61,8 @@ public abstract class LivingEntityMixin extends Entity {
             this.captureDrops(new ArrayList<>());
             this.dropEquipment(level);
             Collection<ItemEntity> equipment = captureDrops();
-            if (!ForgeEventFactory.onLivingDrops((LivingEntity) (Object) this, damageSource, drops, lastHurtByPlayerTime > 0)) {
+            assert equipment != null;
+            if (!CommonHooks.onLivingDrops((LivingEntity) (Object) this, damageSource, drops, lastHurtByPlayerTime > 0)) {
                 equipment.forEach(e -> level().addFreshEntity(e));
             }
 

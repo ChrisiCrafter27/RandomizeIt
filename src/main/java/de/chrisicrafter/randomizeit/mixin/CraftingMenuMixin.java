@@ -17,7 +17,7 @@ import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.event.ForgeEventFactory;
+import net.neoforged.neoforge.common.CommonHooks;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -26,6 +26,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -53,23 +54,18 @@ public abstract class CraftingMenuMixin extends RecipeBookMenu {
 
     @Unique ItemStack randomizeIt$getRandomized(ItemStack item, Player player, int slot) {
         if(player.level() instanceof ServerLevel level && level.getGameRules().getBoolean(ModGameRules.RANDOM_CRAFTING_RESULT) && slot == 0 && !item.is(Items.AIR))
-            return new ItemStack(RandomizerData.getInstance(level, player).getRandomizedItemForRecipe(item.getItem(), true), item.getCount());
+            return new ItemStack(RandomizerData.getInstance(level, player).getRandomizedItemForRecipe(item.getItem(), level, true), item.getCount());
         else return item;
     }
 
     @Override
-    public void clicked(int slotId, int buttonId, @NotNull ClickType clickType, Player player) {
-        boolean randomCraftingResult = player.level() instanceof ServerLevel level ? level.getGameRules().getBoolean(ModGameRules.RANDOM_CRAFTING_RESULT) : GameruleData.randomCraftingResult.enabled;
-        if(!randomCraftingResult || slotId != 0) {
-            super.clicked(slotId, buttonId, clickType, player);
-            return;
-        }
+    public void clicked(int slotId, int buttonId, @NotNull ClickType clickType, @NotNull Player player) {
         try {
             this.randomizeIt$doClick(slotId, buttonId, clickType, player);
         } catch (Exception exception) {
             CrashReport crashreport = CrashReport.forThrowable(exception, "Container click");
             CrashReportCategory crashreportcategory = crashreport.addCategory("Click info");
-            crashreportcategory.setDetail("Menu Type", () -> this.randomizeIt$menuType != null ? BuiltInRegistries.MENU.getKey(this.randomizeIt$menuType).toString() : "<no type>");
+            crashreportcategory.setDetail("Menu Type", () -> this.randomizeIt$menuType != null ? Objects.requireNonNull(BuiltInRegistries.MENU.getKey(this.randomizeIt$menuType)).toString() : "<no type>");
             crashreportcategory.setDetail("Menu Class", () -> this.getClass().getCanonicalName());
             crashreportcategory.setDetail("Slot Count", this.slots.size());
             crashreportcategory.setDetail("Slot", slotId);
@@ -174,7 +170,7 @@ public abstract class CraftingMenuMixin extends RecipeBookMenu {
 
                 player.updateTutorialInventoryAction(itemstack10, randomizeIt$getRandomized(slot7, player, slotId), clickaction);
                 if (!this.randomizeIt$tryItemClickBehaviourOverride(player, clickaction, slot7, itemstack9, itemstack10)) {
-                    if (!ForgeEventFactory.onItemStackedOn(itemstack9, itemstack10, slot7, clickaction, player, randomizeIt$createCarriedSlotAccess()))
+                    if (!CommonHooks.onItemStackedOn(itemstack9, itemstack10, slot7, clickaction, player, randomizeIt$createCarriedSlotAccess()))
                         if (itemstack9.isEmpty()) {
                             if (!itemstack10.isEmpty()) {
                                 int i3 = clickaction == ClickAction.PRIMARY ? itemstack10.getCount() : 1;
@@ -227,7 +223,7 @@ public abstract class CraftingMenuMixin extends RecipeBookMenu {
                             slot2.setByPlayer(ItemStack.EMPTY);
                             slot2.onTake(player, itemstack6);
                         } catch (Exception e) {
-                            LogUtils.getLogger().warn("Exception caught during item swap in CraftingMenuMixin: " + Arrays.toString(e.getStackTrace()));
+                            LogUtils.getLogger().warn("Exception caught during item swap in CraftingMenuMixin: {}", Arrays.toString(e.getStackTrace()));
                         }
                     }
                 } else if (itemstack6.isEmpty()) {

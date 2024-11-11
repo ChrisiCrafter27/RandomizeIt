@@ -9,6 +9,7 @@
   "gamerule.randomRandomizerToggleInterval.description": "Interval in minutes. Set to 0 to disable",
   "gamerule.announceRandomizerToggle": "Announce randomizer toggles",
   "gamerule.playerUniqueData": "Randomized stuff is player-unique",
+  "gamerule.ignoreToolForRandomBlockDrop": "Ignore tool when randomBlockDrops is enabled",
 
   "commands.randomizeit.randomize.reset.all.server": "Reset all item mutations",
   "commands.randomizeit.randomize.reset.all.player.zero": "Reset all item mutations for no players",

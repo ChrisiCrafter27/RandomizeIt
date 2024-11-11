@@ -1,10 +1,10 @@
 package de.chrisicrafter.randomizeit.data.client;
 
 import de.chrisicrafter.randomizeit.utils.MapUtils;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.HashMap;
 import java.util.Optional;
@@ -28,28 +28,28 @@ public class ClientRandomizerData {
 
         int size1 = tag.getInt("block_drops");
         for(int i = 0; i < size1; i++) {
-            blockDrops.put(ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("block_drop_k" + i))), ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("block_drop_v" + i))));
+            blockDrops.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("block_drop_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("block_drop_v" + i))));
         }
 
         HashMap<Item, Item> entityDrops = new HashMap<>();
 
         int size2 = tag.getInt("entity_drops");
         for(int i = 0; i < size2; i++) {
-            entityDrops.put(ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("entity_drop_k" + i))), ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("entity_drop_v" + i))));
+            entityDrops.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("entity_drop_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("entity_drop_v" + i))));
         }
 
         HashMap<Item, Item> craftingResult = new HashMap<>();
 
         int size3 = tag.getInt("crafting_results");
         for(int i = 0; i < size3; i++) {
-            craftingResult.put(ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("crafting_result_k" + i))), ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("crafting_result_v" + i))));
+            craftingResult.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("crafting_result_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("crafting_result_v" + i))));
         }
 
         HashMap<Item, Item> chestLoots = new HashMap<>();
 
         int size4 = tag.getInt("chest_loots");
         for(int i = 0; i < size4; i++) {
-            chestLoots.put(ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_k" + i))), ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_v" + i))));
+            chestLoots.put(BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_k" + i))), BuiltInRegistries.ITEM.getValue(ResourceLocation.tryParse(tag.getString("chest_loot_v" + i))));
         }
 
         return new ClientRandomizerData(blockDrops, entityDrops, craftingResult, chestLoots);
