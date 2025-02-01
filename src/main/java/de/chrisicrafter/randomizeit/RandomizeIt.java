@@ -42,6 +42,7 @@ public class RandomizeIt {
 
     private void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
         event.registrar("1")
+                .optional()
                 .playToClient(
                         UpdateRandomizerDataPayload.TYPE,
                         UpdateRandomizerDataPayload.CODEC,
@@ -53,8 +54,7 @@ public class RandomizeIt {
                 .playToClient(
                         PlayUiSoundS2CPayload.TYPE,
                         PlayUiSoundS2CPayload.CODEC,
-                        PlayUiSoundS2CPayload::handle)
-                .optional();
+                        PlayUiSoundS2CPayload::handle);
     }
 
     @SubscribeEvent
